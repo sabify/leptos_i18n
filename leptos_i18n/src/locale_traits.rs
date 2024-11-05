@@ -1,5 +1,4 @@
 use icu_locid::{LanguageIdentifier, Locale as IcuLocale};
-// use icu_locid_transform::LocaleDirectionality;
 use leptos_router::ChooseView;
 use std::{fmt::Debug, hash::Hash, str::FromStr};
 
