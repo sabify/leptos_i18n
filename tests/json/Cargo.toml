@@ -13,7 +13,7 @@ leptos = { workspace = true, features = ["ssr"] }
 tests_common = { path = "../common" }
 
 [dependencies.leptos_i18n]
-workspace = true
+path = "../../leptos_i18n"
 features = [
   "interpolate_display",
   "track_locale_files",
