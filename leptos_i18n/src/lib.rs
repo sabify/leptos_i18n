@@ -152,15 +152,19 @@ pub mod __private {
     }
     #[cfg(feature = "plurals")]
     pub use crate::formatting::get_plural_rules;
-    pub use crate::macro_helpers::*;
-    pub use crate::routing::{i18n_routing, BaseRoute, I18nNestedRoute};
+    pub use crate::{
+        macro_helpers::*,
+        routing::{i18n_routing, BaseRoute, I18nNestedRoute},
+    };
+    pub use formatting::get_locale_directionality;
     pub use leptos_i18n_macro::declare_locales;
 }
 
 /// This module contain utilities to create custom ICU providers.
 pub mod custom_provider {
-    pub use crate::macro_helpers::formatting::data_provider::IcuDataProvider;
-    pub use crate::macro_helpers::formatting::inner::set_icu_data_provider;
+    pub use crate::macro_helpers::formatting::{
+        data_provider::IcuDataProvider, inner::set_icu_data_provider,
+    };
     pub use leptos_i18n_macro::IcuDataProvider;
 }
 
@@ -191,6 +195,8 @@ pub mod reexports {
         pub use icu_provider as provider;
 
         pub use icu_locid as locid;
+
+        pub use icu_locid_transform as locid_transform;
     }
     pub use leptos;
     pub use leptos_router;

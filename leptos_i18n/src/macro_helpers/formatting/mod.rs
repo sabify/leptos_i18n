@@ -20,6 +20,7 @@ pub use datetime::*;
 use icu_datetime::{options::length, DateFormatter, DateTimeFormatter, TimeFormatter};
 #[cfg(feature = "format_list")]
 use icu_list::{ListFormatter, ListLength};
+use icu_locid_transform::{LocaleDirectionality, LocaleTransformError};
 #[cfg(feature = "plurals")]
 use icu_plurals::{PluralRuleType, PluralRules};
 #[cfg(feature = "format_list")]
@@ -33,7 +34,7 @@ pub use time::*;
     feature = "format_nums",
     feature = "format_datetime",
     feature = "format_list",
-    feature = "plurals"
+    feature = "plurals",
 ))]
 use crate::Locale;
 #[cfg(feature = "format_nums")]
@@ -140,6 +141,18 @@ fn get_list_formatter<L: Locale>(
     })
 }
 
+#[doc(hidden)]
+pub fn get_locale_directionality() -> &'static LocaleDirectionality {
+    use data_provider::IcuDataProvider;
+
+    Box::leak(Box::new(inner::FORMATTERS.with_mut(|formatters| {
+        formatters
+            .provider
+            .try_new_locale_directionality()
+            .expect("A LocaleDirectionality")
+    })))
+}
+
 #[cfg(feature = "plurals")]
 #[doc(hidden)]
 pub fn get_plural_rules<L: Locale>(
@@ -162,15 +175,21 @@ pub fn get_plural_rules<L: Locale>(
     })
 }
 
-#[cfg(any(
-    feature = "format_nums",
-    feature = "format_datetime",
-    feature = "format_list",
-    feature = "plurals"
-))]
 pub(crate) mod inner {
     use super::*;
+    #[cfg(any(
+        feature = "format_nums",
+        feature = "format_datetime",
+        feature = "format_list",
+        feature = "plurals",
+    ))]
     use icu_locid::Locale as IcuLocale;
+    #[cfg(any(
+        feature = "format_nums",
+        feature = "format_datetime",
+        feature = "format_list",
+        feature = "plurals",
+    ))]
     use std::collections::HashMap;
     use std::sync::{OnceLock, RwLock};
 
@@ -235,34 +254,14 @@ pub(crate) mod inner {
     }
 }
 
-#[cfg(not(any(
-    feature = "format_nums",
-    feature = "format_datetime",
-    feature = "format_list",
-    feature = "plurals"
-)))]
-pub(crate) mod inner {
-    /// Supply a custom ICU data provider
-    /// Does nothing if the "icu_compiled_data" feature is enabled.
-    pub fn set_icu_data_provider(data_provider: impl super::data_provider::IcuDataProvider) {
-        let _ = data_provider;
-    }
-}
-
 pub(crate) mod data_provider {
-    #[cfg(any(
-        feature = "format_nums",
-        feature = "format_datetime",
-        feature = "format_list",
-        feature = "plurals"
-    ))]
     use super::*;
 
     #[cfg(any(
         feature = "format_nums",
         feature = "format_datetime",
         feature = "format_list",
-        feature = "plurals"
+        feature = "plurals",
     ))]
     use icu_provider::DataLocale;
 
@@ -331,6 +330,11 @@ pub(crate) mod data_provider {
             locale: &DataLocale,
             rule_type: PluralRuleType,
         ) -> Result<PluralRules, icu_plurals::PluralsError>;
+
+        /// Tries to create a new `LocaleDirectionality`
+        fn try_new_locale_directionality(
+            &self,
+        ) -> Result<LocaleDirectionality, LocaleTransformError>;
     }
 
     #[cfg(feature = "icu_compiled_data")]
@@ -409,6 +413,12 @@ pub(crate) mod data_provider {
             rule_type: PluralRuleType,
         ) -> Result<PluralRules, icu_plurals::PluralsError> {
             PluralRules::try_new(locale, rule_type)
+        }
+
+        fn try_new_locale_directionality(
+            &self,
+        ) -> Result<LocaleDirectionality, LocaleTransformError> {
+            Ok(LocaleDirectionality::new())
         }
     }
 
@@ -499,6 +509,12 @@ pub(crate) mod data_provider {
             rule_type: PluralRuleType,
         ) -> Result<PluralRules, icu_plurals::PluralsError> {
             self.get_provider().try_new_plural_rules(locale, rule_type)
+        }
+
+        fn try_new_locale_directionality(
+            &self,
+        ) -> Result<LocaleDirectionality, LocaleTransformError> {
+            self.get_provider().try_new_locale_directionality()
         }
     }
 }

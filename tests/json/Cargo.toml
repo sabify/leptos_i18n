@@ -10,17 +10,17 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 leptos = { workspace = true, features = ["ssr"] }
-tests_common = { workspace = true }
+tests_common = { path = "../common" }
 
 [dependencies.leptos_i18n]
 workspace = true
 features = [
-    "interpolate_display",
-    "track_locale_files",
-    "plurals",
-    "format_datetime",
-    "format_nums",
-    "format_list",
+  "interpolate_display",
+  "track_locale_files",
+  "plurals",
+  "format_datetime",
+  "format_nums",
+  "format_list",
 ]
 
 

@@ -16,7 +16,7 @@ use crate::{use_i18n_context, I18nContext, Locale};
 #[derive(Debug)]
 struct PathBuilder<'a>(Vec<&'a str>);
 
-impl<'a> Default for PathBuilder<'a> {
+impl Default for PathBuilder<'_> {
     fn default() -> Self {
         Self::new()
     }
@@ -271,7 +271,7 @@ fn view_wrapper<L: Locale, View: ChooseView>(
     match redir {
         None => Either::Left(view),
         Some(path) => {
-            let view = Arc::new(move || view! { <Redirect path={ path.clone() }/> });
+            let view = Arc::new(move || view! { <Redirect path=path.clone() /> });
             Either::Right(RedirectView(view))
         }
     }

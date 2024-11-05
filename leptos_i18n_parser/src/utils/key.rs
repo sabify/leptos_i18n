@@ -1,8 +1,12 @@
-use crate::parse_locales::error::{Error, Result};
-use crate::parse_locales::VAR_COUNT_KEY;
-use std::fmt::{Debug, Display};
-use std::hash::Hash;
-use std::rc::Rc;
+use crate::parse_locales::{
+    error::{Error, Result},
+    VAR_COUNT_KEY,
+};
+use std::{
+    fmt::{Debug, Display},
+    hash::Hash,
+    rc::Rc,
+};
 
 #[derive(Clone)]
 pub struct Key {
@@ -166,7 +170,7 @@ impl<'de> serde::de::Deserialize<'de> for Key {
     }
 }
 
-impl<'de> serde::de::Visitor<'de> for KeyVisitor {
+impl serde::de::Visitor<'_> for KeyVisitor {
     type Value = Key;
 
     fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {

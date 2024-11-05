@@ -1,19 +1,25 @@
 use serde::de::MapAccess;
 
-use crate::utils::formatter::{Formatter, SKIP_ICU_CFG};
-use crate::utils::{Key, KeyPath};
-use std::collections::{BTreeMap, BTreeSet};
-use std::fs::File;
-use std::io::{BufReader, Read};
-use std::path::{Path, PathBuf};
+use crate::utils::{
+    formatter::{Formatter, SKIP_ICU_CFG},
+    Key, KeyPath,
+};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fs::File,
+    io::{BufReader, Read},
+    path::{Path, PathBuf},
+};
 
-use super::cfg_file::ConfigFile;
-use super::error::{Error, Result};
-use super::parsed_value::{ParsedValue, ParsedValueSeed};
-use super::plurals::{PluralForm, PluralRuleType, Plurals};
-use super::ranges::RangeType;
-use super::warning::{Warning, Warnings};
-use super::{ForeignKeysPaths, StringIndexer, VAR_COUNT_KEY};
+use super::{
+    cfg_file::ConfigFile,
+    error::{Error, Result},
+    parsed_value::{ParsedValue, ParsedValueSeed},
+    plurals::{PluralForm, PluralRuleType, Plurals},
+    ranges::RangeType,
+    warning::{Warning, Warnings},
+    ForeignKeysPaths, StringIndexer, VAR_COUNT_KEY,
+};
 
 #[derive(Debug)]
 pub enum SerdeError {
@@ -616,7 +622,7 @@ impl Locale {
     }
 }
 
-impl<'de, 'a> serde::de::DeserializeSeed<'de> for LocaleSeed<'a> {
+impl<'de> serde::de::DeserializeSeed<'de> for LocaleSeed<'_> {
     type Value = Locale;
 
     fn deserialize<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
@@ -639,7 +645,7 @@ impl<'de, 'a> serde::de::DeserializeSeed<'de> for LocaleSeed<'a> {
     }
 }
 
-impl<'de, 'a> serde::de::Visitor<'de> for LocaleSeed<'a> {
+impl<'de> serde::de::Visitor<'de> for LocaleSeed<'_> {
     type Value = BTreeMap<Key, ParsedValue>;
 
     fn visit_map<A>(mut self, mut map: A) -> Result<Self::Value, A::Error>

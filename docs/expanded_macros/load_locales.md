@@ -525,6 +525,9 @@ pub mod i18n {
                 /// If the "lang" attribute should be set on the root `<html>` element. (default to true)
                 #[prop(optional)]
                 set_lang_attr_on_html: Option<bool>,
+                /// If the "dir" attribute should be set on the root `<html>` element based on the language. (default to true)
+                #[prop(optional)]
+                set_dir_attr_on_html: Option<bool>,
                 /// Enable the use of a cookie to save the choosen locale (default to true).
                 /// Does nothing without the "cookie" feature
                 #[prop(optional)]
@@ -539,6 +542,7 @@ pub mod i18n {
             ) -> impl IntoView {
                 l_i18n_crate::context::provide_i18n_context_component_inner::<Locale>(
                     set_lang_attr_on_html,
+                    set_dir_attr_on_html,
                     enable_cookie,
                     cookie_name,
                     cookie_options,

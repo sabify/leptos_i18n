@@ -1,11 +1,11 @@
 use std::ops::Bound;
 
-use leptos_i18n_parser::parse_locales::{
-    locale::InterpolOrLit,
-    ranges::{Range, RangeNumber, Ranges, UntypedRangesInner},
-};
 use leptos_i18n_parser::{
-    parse_locales::parsed_value::ParsedValue,
+    parse_locales::{
+        locale::InterpolOrLit,
+        parsed_value::ParsedValue,
+        ranges::{Range, RangeNumber, Ranges, UntypedRangesInner},
+    },
     utils::{Key, KeyPath},
 };
 use proc_macro2::TokenStream;

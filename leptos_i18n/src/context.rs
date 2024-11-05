@@ -2,10 +2,9 @@
 
 use codee::string::FromToStringCodec;
 use core::marker::PhantomData;
-use icu_locid_transform::LocaleDirectionality;
 use leptos::{
     children,
-    either::Either,
+    either::EitherOf4,
     prelude::*,
     tachys::{html::directive::IntoDirective, reactive_graph::OwnedView, view::any_view::AnyView},
 };
@@ -147,9 +146,9 @@ fn init_context_inner<L: Locale>(
     }
 }
 
-/// *********************************************
-/// * CONTEXT
-/// *********************************************
+// *********************************************
+// * CONTEXT
+// *********************************************
 
 /// Options to init of provide a `I18nContext`
 #[derive(default_struct_builder::DefaultBuilder)]
@@ -168,7 +167,7 @@ where
     ssr_lang_header_getter: UseLocalesOptions,
 }
 
-impl<'a, L: Locale> Default for I18nContextOptions<'a, L> {
+impl<L: Locale> Default for I18nContextOptions<'_, L> {
     fn default() -> Self {
         I18nContextOptions {
             enable_cookie: ENABLE_COOKIE,
@@ -245,9 +244,9 @@ pub fn provide_i18n_context_with_options<L: Locale>(
     provide_i18n_context_with_options_inner(options)
 }
 
-/// *********************************************
-/// * SUB CONTEXT
-/// *********************************************
+// *********************************************
+// * SUB CONTEXT
+// *********************************************
 
 #[track_caller]
 fn init_subcontext_with_options<L: Locale>(
@@ -441,6 +440,7 @@ macro_rules! fill_options {
 #[track_caller]
 fn provide_i18n_context_component_inner<L: Locale, Chil: IntoView>(
     set_lang_attr_on_html: Option<bool>,
+    set_dir_attr_on_html: Option<bool>,
     enable_cookie: Option<bool>,
     cookie_name: Option<Cow<str>>,
     cookie_options: Option<CookieOptions<L>>,
@@ -464,31 +464,42 @@ fn provide_i18n_context_component_inner<L: Locale, Chil: IntoView>(
     let embed_translations = move || embed_translations(reg_ctx.clone());
     #[cfg(not(all(feature = "dynamic_load", any(feature = "ssr", feature = "hydrate"))))]
     let embed_translations = view! { <script /> };
-    if set_lang_attr_on_html.unwrap_or(true) {
-        let lang = move || i18n.get_locale().as_str();
-        let dir = move || {
-            let ld = LocaleDirectionality::new();
-            if let Some(dir) = ld.get(i18n.get_locale().as_langid()) {
-                match dir {
-                    icu_locid_transform::Direction::LeftToRight => "ltr",
-                    icu_locid_transform::Direction::RightToLeft => "rtl",
-                    _ => "auto",
-                }
-            } else {
-                "auto"
-            }
-        };
-
-        Either::Left(view! {
+    let set_lang = set_lang_attr_on_html.unwrap_or(true);
+    let set_dir = set_dir_attr_on_html.unwrap_or(true);
+    let lang = move || {
+        if set_lang {
+            Some(i18n.get_locale().as_str())
+        } else {
+            None
+        }
+    };
+    let dir = move || {
+        if set_dir {
+            i18n.get_locale().direction()
+        } else {
+            None
+        }
+    };
+    match (set_lang, set_dir) {
+        (true, true) => EitherOf4::A(view! {
             <Html attr:lang=lang attr:dir=dir />
             {children}
             {embed_translations}
-        })
-    } else {
-        Either::Right(view! {
+        }),
+        (true, false) => EitherOf4::B(view! {
+            <Html attr:lang=lang />
             {children}
             {embed_translations}
-        })
+        }),
+        (false, true) => EitherOf4::C(view! {
+            <Html attr:dir=dir />
+            {children}
+            {embed_translations}
+        }),
+        (false, false) => EitherOf4::D(view! {
+            {children}
+            {embed_translations}
+        }),
     }
 }
 
@@ -496,6 +507,7 @@ fn provide_i18n_context_component_inner<L: Locale, Chil: IntoView>(
 #[track_caller]
 pub fn provide_i18n_context_component<L: Locale, Chil: IntoView>(
     set_lang_attr_on_html: Option<bool>,
+    set_dir_attr_on_html: Option<bool>,
     enable_cookie: Option<bool>,
     cookie_name: Option<Cow<str>>,
     cookie_options: Option<CookieOptions<L>>,
@@ -504,6 +516,7 @@ pub fn provide_i18n_context_component<L: Locale, Chil: IntoView>(
 ) -> impl IntoView {
     provide_i18n_context_component_inner(
         set_lang_attr_on_html,
+        set_dir_attr_on_html,
         enable_cookie,
         cookie_name,
         cookie_options,
@@ -516,12 +529,14 @@ pub fn provide_i18n_context_component<L: Locale, Chil: IntoView>(
 #[track_caller]
 pub fn provide_i18n_context_component_island<L: Locale>(
     set_lang_attr_on_html: Option<bool>,
+    set_dir_attr_on_html: Option<bool>,
     enable_cookie: Option<bool>,
     cookie_name: Option<Cow<str>>,
     children: children::Children,
 ) -> impl IntoView {
     provide_i18n_context_component_inner::<L, AnyView>(
         set_lang_attr_on_html,
+        set_dir_attr_on_html,
         enable_cookie,
         cookie_name,
         None,

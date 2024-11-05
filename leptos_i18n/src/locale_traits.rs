@@ -1,7 +1,7 @@
 use icu_locid::{LanguageIdentifier, Locale as IcuLocale};
+// use icu_locid_transform::LocaleDirectionality;
 use leptos_router::ChooseView;
-use std::str::FromStr;
-use std::{fmt::Debug, hash::Hash};
+use std::{fmt::Debug, hash::Hash, str::FromStr};
 
 use crate::langid::{convert_vec_str_to_langids_lossy, filter_matches, find_match};
 
@@ -51,6 +51,9 @@ pub trait Locale<L: Locale = Self>:
     fn as_langid(self) -> &'static LanguageIdentifier {
         Locale::as_icu_locale(self).as_ref()
     }
+
+    /// Return a static str that represent the direction of the language.
+    fn direction(self) -> Option<&'static str>;
 
     /// Return a static reference to an array containing all variants of this enum
     fn get_all() -> &'static [L];

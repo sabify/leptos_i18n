@@ -168,6 +168,10 @@ impl<L: Locale, S: Scope<L>> Locale<L> for ScopedLocale<L, S> {
         <L as Locale>::as_icu_locale(self.locale)
     }
 
+    fn direction(self) -> Option<&'static str> {
+        <L as Locale>::direction(self.locale)
+    }
+
     fn get_all() -> &'static [L] {
         <L as Locale>::get_all()
     }

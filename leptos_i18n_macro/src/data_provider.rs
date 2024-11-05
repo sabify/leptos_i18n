@@ -103,6 +103,14 @@ pub fn derive_icu_data_provider(input: proc_macro::TokenStream) -> proc_macro::T
         quote!()
     };
 
+    let new_locale_directionality = quote! {
+            fn try_new_locale_directionality(
+                &self,
+            ) -> Result<leptos_i18n::reexports::icu::locid_transform::LocaleDirectionality, leptos_i18n::reexports::icu::locid_transform::LocaleTransformError> {
+                leptos_i18n::reexports::icu::locid_transform::LocaleDirectionality::try_new_unstable(self.get_provider())
+            }
+    };
+
     let expanded = quote! {
         impl #impl_generics leptos_i18n::custom_provider::IcuDataProvider for #name #ty_generics #where_clause {
 
@@ -113,6 +121,8 @@ pub fn derive_icu_data_provider(input: proc_macro::TokenStream) -> proc_macro::T
             #new_list_formatter
 
             #new_plural_rules
+
+            #new_locale_directionality
         }
     };
 

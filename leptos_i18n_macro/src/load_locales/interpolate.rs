@@ -1,20 +1,15 @@
-use leptos_i18n_parser::parse_locales::locale::InterpolationKeys;
-use leptos_i18n_parser::parse_locales::locale::Locale;
-use leptos_i18n_parser::utils::Key;
-use leptos_i18n_parser::utils::KeyPath;
+use leptos_i18n_parser::{
+    parse_locales::locale::{InterpolationKeys, Locale},
+    utils::{Key, KeyPath},
+};
 use proc_macro2::{Span, TokenStream};
-use quote::format_ident;
-use quote::quote;
-use quote::ToTokens;
+use quote::{format_ident, quote, ToTokens};
 
 use super::parsed_value;
 // use super::parsed_value::InterpolationKeys;
 // use super::parsed_value::RangeOrPlural;
-use super::parsed_value::TRANSLATIONS_KEY;
-use super::ranges::RangeType;
-use super::strings_accessor_method_name;
-use crate::utils::formatter::Formatter;
-use crate::utils::EitherOfWrapper;
+use super::{parsed_value::TRANSLATIONS_KEY, ranges::RangeType, strings_accessor_method_name};
+use crate::utils::{formatter::Formatter, EitherOfWrapper};
 
 pub const LOCALE_FIELD_KEY: &str = "_locale";
 

@@ -24,7 +24,7 @@ where
     }
 }
 
-impl<'a> DisplayComponent for &'a str {
+impl DisplayComponent for &'_ str {
     fn fmt<T>(&self, f: &mut fmt::Formatter<'_>, children: T) -> fmt::Result
     where
         T: Fn(&mut fmt::Formatter<'_>) -> fmt::Result,
