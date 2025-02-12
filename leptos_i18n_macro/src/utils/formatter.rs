@@ -82,7 +82,12 @@ pub struct CurrencyCode(pub TinyAsciiStr<3>);
 
 impl ToTokens for CurrencyCode {
     fn to_token_stream(&self) -> TokenStream {
-        quote!(l_i18n_crate::reexports::icu::currency::formatter::CurrencyCode(#self.into()))
+        let inner = self.0.as_str();
+        quote!(
+            l_i18n_crate::reexports::icu::currency::formatter::CurrencyCode(
+                l_i18n_crate::reexports::tinystr::tinystr!(3, #inner)
+            )
+        )
     }
 
     fn to_tokens(&self, tokens: &mut TokenStream) {

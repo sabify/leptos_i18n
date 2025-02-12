@@ -209,6 +209,7 @@ pub mod reexports {
     }
     pub use leptos;
     pub use serde;
+    pub use tinystr;
     pub use typed_builder;
     pub use wasm_bindgen;
 }
