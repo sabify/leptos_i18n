@@ -25,9 +25,9 @@ leptos_i18n_build = { path = "./leptos_i18n_build", version = "0.6.2", default-f
 
 # non-members
 # leptos
-leptos = { version = "0.8", default-features = false }
-leptos_router = { version = "0.8", default-features = false }
-leptos_meta = { version = "0.8", default-features = false }
+leptos = { version = "0.9.0-alpha", default-features = false }
+leptos_router = { version = "0.9.0-alpha", default-features = false }
+leptos_meta = { version = "0.9.0-alpha", default-features = false }
 
 # icu
 icu = { version = "2.2", default-features = false }
