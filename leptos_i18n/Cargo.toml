@@ -60,6 +60,9 @@ icu_compiled_data = [
   "leptos_i18n_macro/icu_compiled_data",
 ]
 nightly = ["leptos/nightly"]
+# Stamp the per-request CSP nonce (`leptos::nonce::use_nonce`) onto the
+# inline <script> tags that embed translations.
+nonce = ["leptos/nonce"]
 
 # Formatting features
 all_formats = [

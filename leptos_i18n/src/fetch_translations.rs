@@ -194,7 +194,7 @@ pub use register::RegisterCtx;
 #[cfg(all(feature = "dynamic_load", feature = "hydrate"))]
 pub fn init_translations<L: Locale>() -> impl leptos::IntoView {
     use crate::locale_traits::TranslationUnitId;
-    use leptos::{html::InnerHtmlAttribute, view, web_sys};
+    use leptos::{attr::global::GlobalAttributes, html::InnerHtmlAttribute, view, web_sys};
     use wasm_bindgen::UnwrapThrowExt;
 
     #[derive(serde::Serialize)]
@@ -242,5 +242,5 @@ pub fn init_translations<L: Locale>() -> impl leptos::IntoView {
     buf.push_str(&json);
     buf.push(';');
 
-    view! { <script inner_html=buf /> }
+    view! { <script nonce=crate::script_nonce() inner_html=buf /> }
 }

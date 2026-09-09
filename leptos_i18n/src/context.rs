@@ -505,7 +505,9 @@ fn embed_translations_fn<L: Locale>(
     reg_ctx: crate::fetch_translations::RegisterCtx<L>,
 ) -> impl IntoView {
     let translations = reg_ctx.to_array();
-    view! { <script inner_html=translations /> }
+    // Carry the per-request CSP nonce (leptos `nonce` feature) so a strict
+    // `script-src` policy admits the embedded translations.
+    view! { <script nonce=crate::script_nonce() inner_html=translations /> }
 }
 
 macro_rules! fill_options {
@@ -553,7 +555,7 @@ fn provide_i18n_context_component_inner<L: Locale, Chil: IntoView>(
     #[cfg(all(feature = "dynamic_load", feature = "ssr"))]
     let embed_translations = move || embed_translations_fn(reg_ctx.clone());
     #[cfg(not(all(feature = "dynamic_load", any(feature = "ssr", feature = "hydrate"))))]
-    let embed_translations = view! { <script /> };
+    let embed_translations = view! { <script nonce=crate::script_nonce() /> };
     let lang = set_lang_attr_on_html
         .unwrap_or(true)
         .then_some(move || i18n.get_locale().as_str());
