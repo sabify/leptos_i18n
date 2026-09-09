@@ -127,6 +127,19 @@ mod macro_helpers;
 mod macros;
 mod scopes;
 
+/// The CSP nonce of the current server response, for the inline `<script>`
+/// tags this crate renders. `None` without the `nonce` feature or outside a
+/// response that provided one (`leptos::nonce::provide_nonce`).
+#[cfg(feature = "nonce")]
+pub(crate) fn script_nonce() -> Option<leptos::nonce::Nonce> {
+    leptos::nonce::use_nonce()
+}
+
+#[cfg(not(feature = "nonce"))]
+pub(crate) fn script_nonce() -> Option<&'static str> {
+    None
+}
+
 pub use macro_helpers::formatting;
 
 pub use locale_traits::{Direction, Locale, LocaleKeys};
