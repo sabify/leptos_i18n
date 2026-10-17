@@ -204,13 +204,21 @@ fn init_context_inner<L: Locale>(
     });
 
     Effect::new_isomorphic(move |_| {
+        // On the server this runs as an executor task, unsynchronised with the cleanup of the
+        // owner holding `locale_signal` (request dropped, client gone). Whether that cleanup
+        // lands before the task starts or while it runs, a disposed signal ends the run
+        // instead of panicking.
         #[cfg(feature = "unified_contexts")]
         let new_lang = {
-            let new_lang_any = locale_signal.get();
+            let Some(new_lang_any) = locale_signal.try_get() else {
+                return;
+            };
             L::from_str(new_lang_any.0).unwrap_or_default()
         };
         #[cfg(not(feature = "unified_contexts"))]
-        let new_lang = locale_signal.get();
+        let Some(new_lang) = locale_signal.try_get() else {
+            return;
+        };
         set_lang_cookie.set(Some(new_lang));
     });
 
