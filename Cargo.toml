@@ -25,23 +25,23 @@ leptos_i18n_build = { path = "./leptos_i18n_build", version = "0.6.2", default-f
 
 # non-members
 # leptos
-leptos = { version = "0.9.0-alpha", default-features = false }
-leptos_router = { version = "0.9.0-alpha", default-features = false }
-leptos_meta = { version = "0.9.0-alpha", default-features = false }
+leptos = { version = "0.9.0-rc0", default-features = false }
+leptos_router = { version = "0.9.0-rc0", default-features = false }
+leptos_meta = { version = "0.9.0-rc0", default-features = false }
 
 # icu
-icu = { version = "2.2", default-features = false }
-icu_locale = { version = "2.2", default-features = false }
-icu_provider = { version = "2.2", default-features = false }
+icu = { version = "2.3", default-features = false }
+icu_locale = { version = "2.3", default-features = false }
+icu_provider = { version = "2.3", default-features = false }
 fixed_decimal = { version = "0.7", default-features = false }
-icu_provider_export = { version = "2.2", default-features = false }
-icu_provider_source = { version = "2.2", default-features = false }
-icu_plurals = { version = "2.2", default-features = false }
-icu_datetime = { version = "2.2", default-features = false }
-icu_calendar = { version = "2.2", default-features = false }
-icu_list = { version = "2.2", default-features = false }
-icu_decimal = { version = "2.2", default-features = false }
-icu_experimental = { version = "0.5", default-features = false }
+icu_provider_export = { version = "2.3", default-features = false }
+icu_provider_source = { version = "2.3", default-features = false }
+icu_plurals = { version = "2.3", default-features = false }
+icu_datetime = { version = "2.3", default-features = false }
+icu_calendar = { version = "2.3", default-features = false }
+icu_list = { version = "2.3", default-features = false }
+icu_decimal = { version = "2.3", default-features = false }
+icu_experimental = { version = "0.6", default-features = false }
 tinystr = { default-features = false, version = "0.8" }
 
 default-struct-builder = { default-features = false, version = "0.5" }
@@ -49,7 +49,7 @@ serde_json = { default-features = false, version = "1.0" }
 futures = { default-features = false, version = "0.3" }
 leptos-use = { default-features = false, version = "0.19" }
 writeable = { default-features = false, version = "0.6" }
-prettyplease = { default-features = false, version = "0.2" }
+prettyplease = { default-features = false, version = "0.3" }
 serde-wasm-bindgen = { default-features = false, version = "0.6" }
 serde_yaml = { default-features = false, version = "0.9" }
 codee = { default-features = false, version = "0.3" }
@@ -58,8 +58,13 @@ quote = { default-features = false, version = "1.0" }
 toml = { default-features = false, version = "1.1" }
 async-once-cell = { default-features = false, version = "0.5" }
 wasm-bindgen = { default-features = false, version = "0.2" }
-syn = { default-features = false, version = "2.0" }
+syn = { default-features = false, version = "3.0" }
 typed-builder = { default-features = false, version = "0.23" }
 proc-macro2 = { default-features = false, version = "1.0" }
 serde = { default-features = false, version = "1.0" }
 js-sys = { default-features = false, version = "0.3" }
+
+[patch.crates-io]
+# leptos-use has no leptos 0.9 release on crates.io yet (every 0.19.x requires leptos ^0.8),
+# use the leptos 0.9 port on the sabify/leptos-use `main` branch until a compatible version is published.
+leptos-use = { git = "https://github.com/sabify/leptos-use", branch = "main" }

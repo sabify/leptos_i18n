@@ -280,7 +280,7 @@ fn update_path_effect<L: Locale>(
 
         // TODO FIXME: see https://github.com/leptos-rs/leptos/issues/2979
         // It works for now, but it is not ideal.
-        request_animation_frame(move || {
+        let _ = request_animation_frame(move || {
             navigate(
                 &new_path,
                 NavigateOptions {
@@ -328,7 +328,7 @@ fn correct_locale_prefix_effect<L: Locale>(
 
         // TODO FIXME: see https://github.com/leptos-rs/leptos/issues/2979
         // It works for now, but it is not ideal.
-        request_animation_frame(move || {
+        let _ = request_animation_frame(move || {
             navigate(
                 &new_path,
                 NavigateOptions {

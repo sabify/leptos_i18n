@@ -79,9 +79,9 @@ impl CurrencyCode {
 impl ToTokens for CurrencyCode {
     fn to_token_stream(&self) -> TokenStream {
         let code = Literal::string(self.0.as_str());
-        quote!(l_i18n_crate::reexports::icu::currency::CurrencyCode(
-            l_i18n_crate::reexports::tinystr!(3, #code)
-        ))
+        quote!(
+            l_i18n_crate::reexports::icu::locid::preferences::extensions::unicode::keywords::currency!(#code)
+        )
     }
 
     fn to_tokens(&self, tokens: &mut TokenStream) {
@@ -99,7 +99,7 @@ impl CurrencyWidth {
 
 impl_to_tokens!(
     CurrencyWidth,
-    l_i18n_crate::reexports::icu::currency::options::Width,
+    l_i18n_crate::__private::Width,
     {
         Short,
         Narrow
