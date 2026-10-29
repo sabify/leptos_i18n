@@ -17,11 +17,7 @@ impl DefaultedLocales {
     }
 
     pub fn push(&mut self, key: Key, cfg: &Config) {
-        let default_to = cfg
-            .extensions
-            .get(&key)
-            .unwrap_or(&self.default_locale)
-            .clone();
+        let default_to = cfg.locale_parent(&key).clone();
         self.mapping.insert(key, default_to);
     }
 

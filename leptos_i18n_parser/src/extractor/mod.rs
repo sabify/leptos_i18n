@@ -105,13 +105,15 @@ pub struct StringIndexer {
 
 pub fn extract_locales(
     values: RawLocalesOrNamespaces,
-    cfg: Config,
+    mut cfg: Config,
     diag: Option<Diagnostics>,
 ) -> Result<ParsedLocales> {
     let diag = diag.unwrap_or_default();
+    cfg.compute_locale_parents();
     let merged_plurals = plurals::merge_plurals(values, &diag);
     let resolved_fk = values::foreign_key::resolve_foreign_keys(merged_plurals, &diag, &cfg);
     let mut merged = merge_values(resolved_fk, &cfg, &diag);
+    remove_ident_collisions(&mut merged, &diag);
 
     let builders = get_builders(&mut merged, &diag);
 
@@ -252,7 +254,26 @@ fn get_values_builders(
     path: KeyPath,
     diag: &Diagnostics,
 ) {
-    let interpolation_keys = make_keys(values, &path, diag);
+    let mut interpolation_keys = make_keys(values, &path, diag);
+    let duplicates = colliding_keys(
+        interpolation_keys
+            .vars
+            .keys()
+            .chain(interpolation_keys.components.keys()),
+        &path,
+        diag,
+    );
+    if !duplicates.is_empty() {
+        interpolation_keys
+            .vars
+            .retain(|key, _| !duplicates.contains(key));
+        interpolation_keys
+            .components
+            .retain(|key, _| !duplicates.contains(key));
+        for value in values.values.values_mut() {
+            *value = Value::Dummy(crate::parser::dummy::Dummy { dummies: vec![] });
+        }
+    }
     let id = ids.push_keys(interpolation_keys, path);
     values.builder_id = id;
 }
@@ -265,6 +286,61 @@ fn make_keys(values: &Values, path: &KeyPath, diag: &Diagnostics) -> Interpolati
     }
 
     interpolation_keys
+}
+
+fn colliding_keys<'a>(
+    keys: impl Iterator<Item = &'a Key>,
+    path: &KeyPath,
+    diag: &Diagnostics,
+) -> BTreeSet<Key> {
+    let mut by_ident: BTreeMap<String, Vec<&Key>> = BTreeMap::new();
+    for key in keys {
+        by_ident.entry(key.ident.to_string()).or_default().push(key);
+    }
+    let mut duplicates = BTreeSet::new();
+    for (ident, keys) in by_ident {
+        if keys.len() > 1 {
+            diag.emit_error(Error::IdentCollision {
+                path: path.clone(),
+                ident,
+                names: keys.iter().map(|key| key.name.to_string()).collect(),
+            });
+            duplicates.extend(keys.into_iter().skip(1).cloned());
+        }
+    }
+    duplicates
+}
+
+fn remove_ident_collisions(values: &mut LocalesOrNamespaces, diag: &Diagnostics) {
+    fn check_keys(keys: &mut Keys, path: &mut KeyPath, diag: &Diagnostics) {
+        let duplicates = colliding_keys(keys.values.keys(), path, diag);
+        keys.values.retain(|key, _| !duplicates.contains(key));
+        for (key, value) in &mut keys.values {
+            if let values::ValuesOrSubkeys::Subkeys(keys) = value {
+                check_keys(keys, &mut path.push_key(key.clone()), diag);
+            }
+        }
+    }
+    match values {
+        LocalesOrNamespaces::Locales(locales) => {
+            check_keys(&mut locales.keys, &mut KeyPath::default(), diag);
+        }
+        LocalesOrNamespaces::Namespaces(namespaces) => {
+            let duplicates = colliding_keys(
+                namespaces.iter().map(|ns| &ns.name),
+                &KeyPath::default(),
+                diag,
+            );
+            namespaces.retain(|ns| !duplicates.contains(&ns.name));
+            for ns in namespaces {
+                check_keys(
+                    &mut ns.locales.keys,
+                    &mut KeyPath::new(Some(ns.name.clone())),
+                    diag,
+                );
+            }
+        }
+    }
 }
 
 fn extract_value_keys(
@@ -387,14 +463,15 @@ impl BuilderIndexer {
 
         let mut name = keys.generate_builder_key();
         loop {
-            if self.keys.contains(&name) {
+            let key = Key::new(&name).expect("the builder name should be a valid key");
+            let ident = key.ident.to_string();
+            if self.keys.contains(&ident) {
                 name.push('_');
             } else {
-                let key = Key::new(&name).expect("the builder name should be a valid key");
                 let id = self.reverse_keys.len();
                 self.reverse_keys.push(key);
                 self.ids.insert(keys, (id, BTreeSet::from([path])));
-                self.keys.insert(name);
+                self.keys.insert(ident);
                 break BuilderId(id);
             }
         }
@@ -423,7 +500,7 @@ impl InterpolationKeys {
     pub fn generate_builder_key(&self) -> String {
         let mut s = String::from("i18n_builder_");
         for (key, info) in &self.vars {
-            s.push_str(&key.name);
+            s.push_str(&key.ident.to_string());
             if info.plural {
                 s.push_str("pl");
             }
@@ -447,7 +524,7 @@ impl InterpolationKeys {
             s.push('_');
         }
         for (key, info) in &self.components {
-            s.push_str(&key.name);
+            s.push_str(&key.ident.to_string());
 
             if matches!(info.children_kind, ChildrenKind::SelfClosed) {
                 s.push_str("sf");

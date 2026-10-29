@@ -51,6 +51,11 @@ pub enum Error {
         loc: Location,
     },
     InvalidKey(String),
+    IdentCollision {
+        path: KeyPath,
+        ident: String,
+        names: Vec<String>,
+    },
     InvalidKeyAt {
         key: String,
         loc: Location,
@@ -184,6 +189,10 @@ impl Display for Error {
             Error::InvalidKey(key) => write!(
                 f,
                 "invalid key {key:?}, it can't be used as a rust identifier, try removing whitespaces and special characters."
+            ),
+            Error::IdentCollision { path, ident, names } => write!(
+                f,
+                "Conflicting keys {names:?} at \"{path}\" all resolve to the Rust identifier {ident:?}; rename them so they don't conflict."
             ),
             Error::InvalidKeyAt { key, loc } => write!(
                 f,

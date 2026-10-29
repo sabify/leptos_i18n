@@ -77,7 +77,11 @@ pub fn merge_and_index_keys(
         for (key, values_or_sk) in keys.values.iter_mut() {
             if !values.values.values.contains_key(key) {
                 let loc = loc.push_key(key.clone());
-                diag.emit_warning(Warning::MissingKey { loc: loc.clone() });
+                if !cfg.options.suppress_key_warnings
+                    && !cfg.locale_parents.contains_key(&current_locale_name.key)
+                {
+                    diag.emit_warning(Warning::MissingKey { loc: loc.clone() });
+                }
                 default_locale_for_values_or_sk(values_or_sk, &current_locale_name.key, cfg);
             }
         }
@@ -85,6 +89,12 @@ pub fn merge_and_index_keys(
 
     for (key, value) in values.values.values {
         let mut loc = loc.push_key(key.clone());
+        if !is_default && !keys.values.contains_key(&key) {
+            if !cfg.options.suppress_key_warnings {
+                diag.emit_warning(Warning::SurplusKey { loc: loc.clone() });
+            }
+            continue;
+        }
         match value {
             foreign_key::ResolvedValueOrSubkeys::Value(resolved_value) => {
                 let keys = keys
@@ -137,7 +147,6 @@ pub fn merge_and_index_keys(
                 }
 
                 let Some(values) = keys.values.get_mut(&key) else {
-                    diag.emit_warning(Warning::SurplusKey { loc: loc.clone() });
                     continue;
                 };
 

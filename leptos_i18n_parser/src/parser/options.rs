@@ -59,6 +59,7 @@ pub struct Config {
     pub namespaces: Vec<Key>,
     pub extensions: BTreeMap<Key, Key>,
     pub options: ParseOptions,
+    pub(crate) locale_parents: BTreeMap<Key, Key>,
 }
 
 #[derive(Debug, Clone)]
@@ -66,6 +67,8 @@ pub struct Config {
 pub struct ParseOptions {
     pub file_format: FileFormat,
     pub formatters: Formatters,
+    /// Suppress warnings for missing and surplus translation keys.
+    pub suppress_key_warnings: bool,
 }
 
 #[derive(Clone, Default)]
@@ -102,12 +105,20 @@ impl ParseOptions {
         ParseOptions {
             file_format: FileFormat::Json,
             formatters: Formatters::new(),
+            suppress_key_warnings: false,
         }
     }
 
     pub fn file_format(self, file_format: FileFormat) -> Self {
         Self {
             file_format,
+            ..self
+        }
+    }
+
+    pub fn suppress_key_warnings(self, suppress_key_warnings: bool) -> Self {
+        Self {
+            suppress_key_warnings,
             ..self
         }
     }
@@ -128,6 +139,48 @@ impl ParseOptions {
 }
 
 impl Config {
+    pub(crate) fn compute_locale_parents(&mut self) {
+        self.locale_parents = self
+            .locales
+            .iter()
+            .filter_map(|locale| {
+                if locale.key == self.default_locale {
+                    return None;
+                }
+                let parent = self.extensions.get(&locale.key).cloned().or_else(|| {
+                    let mut base = (*locale.loc_id).clone();
+                    let has_extras = !base.extensions.is_empty()
+                        || !base.id.variants.is_empty()
+                        || base.id.script.is_some();
+                    if !has_extras && base.id.region.is_none() {
+                        return None;
+                    }
+                    base.extensions = Default::default();
+                    base.id.variants = Default::default();
+                    base.id.script = None;
+                    if has_extras
+                        && let Some(parent) = self.locales.iter().find(|l| *l.loc_id == base)
+                    {
+                        return Some(parent.key.clone());
+                    }
+                    base.id.region = None;
+                    self.locales
+                        .iter()
+                        .find(|l| *l.loc_id == base)
+                        .map(|l| l.key.clone())
+                })?;
+                Some((locale.key.clone(), parent))
+            })
+            .collect();
+    }
+
+    pub(crate) fn locale_parent(&self, locale: &Key) -> &Key {
+        self.locale_parents
+            .get(locale)
+            .or_else(|| self.extensions.get(locale))
+            .unwrap_or(&self.default_locale)
+    }
+
     pub fn new(default_locale: &str) -> Result<Self> {
         let default_locale = Self::new_locale_name(default_locale)?;
         Ok(Config {
@@ -138,6 +191,7 @@ impl Config {
             // translations_uri: None,
             extensions: BTreeMap::new(),
             options: ParseOptions::default(),
+            locale_parents: BTreeMap::new(),
         })
     }
 

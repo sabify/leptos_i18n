@@ -120,7 +120,7 @@ impl ForeignKey {
         ctx: &ParseContext,
     ) -> Result<(BTreeMap<String, RawValue>, &'a str), &'a str> {
         let mut depth = 0usize;
-        let mut index = 0usize;
+        let mut index = None;
 
         for (i, c) in s.char_indices() {
             match c {
@@ -137,7 +137,7 @@ impl ForeignKey {
                         }
                     };
                     if depth == 0 {
-                        index = i;
+                        index = Some(i);
                         break;
                     }
                 }
@@ -145,6 +145,13 @@ impl ForeignKey {
             }
         }
 
+        let Some(index) = index else {
+            ctx.diag.emit_error(Error::UnexpectedToken {
+                loc: ctx.into(),
+                message: "malformed foreign key".to_string(),
+            });
+            return Err("");
+        };
         let (before, after) = s.split_at(index + '}'.len_utf8());
 
         let Some(after) = after.trim_start().strip_prefix(')') else {

@@ -173,7 +173,7 @@ impl Component {
             let open_idx = value.find('<')?;
             let close_idx = value[open_idx..].find('>')? + open_idx;
 
-            let before = &value[..open_idx];
+            let before = &s[..skipped + open_idx];
             let tag_content = &value[open_idx + 1..close_idx];
             let after = &value[close_idx + 1..];
 
@@ -189,7 +189,7 @@ impl Component {
                 continue;
             }
 
-            let (key, attrs) = match tag_content.split_once(' ') {
+            let (key, attrs) = match tag_content.split_once(char::is_whitespace) {
                 Some((key, attrs)) => (key, attrs.trim_start()),
                 None => (tag_content, ""),
             };
@@ -234,7 +234,7 @@ impl Component {
                     }
                     depth -= 1;
                 }
-            } else if tag_content == key {
+            } else if tag_content.split_whitespace().next() == Some(key) {
                 depth += 1;
             }
         }
@@ -314,9 +314,13 @@ impl RawAttributes {
         key: &str,
         s: &'a str,
     ) -> Result<(RawAttributeValue, &'a str), &'a str> {
-        if let Some(rest) = s.strip_prefix("true ") {
+        let boolean = |value| {
+            s.strip_prefix(value)
+                .filter(|rest| rest.is_empty() || rest.starts_with(char::is_whitespace))
+        };
+        if let Some(rest) = boolean("true") {
             Ok((RawAttributeValue::Literal(RawLiteral::Bool(true)), rest))
-        } else if let Some(rest) = s.strip_prefix("false ") {
+        } else if let Some(rest) = boolean("false") {
             Ok((RawAttributeValue::Literal(RawLiteral::Bool(false)), rest))
         } else if let Some(rest) = s.strip_prefix('"') {
             match Self::parse_attribute_str(ctx, key, rest) {

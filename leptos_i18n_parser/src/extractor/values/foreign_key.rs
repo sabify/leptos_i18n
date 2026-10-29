@@ -620,6 +620,7 @@ fn get_value_at_with_defaulting<'a, 'b>(
     values: &'a ResolvedLocalesOrNamespaces,
     cfg: &'b Config,
 ) -> Result<&'a ResolvedValueOrSubkeys, Location> {
+    let mut visited = BTreeSet::new();
     loop {
         match values.get_value_at(loc) {
             Some(ResolvedValueOrSubkeys::Defaulted) => {}
@@ -641,10 +642,13 @@ fn get_value_at_with_defaulting<'a, 'b>(
             break Ok(PLACEHOLDER);
         }
 
-        let default_to_key = cfg
-            .extensions
-            .get(&loc.locale.key)
-            .unwrap_or(&cfg.default_locale);
+        visited.insert(loc.locale.key.clone());
+        let parent = cfg.locale_parent(&loc.locale.key);
+        let default_to_key = if visited.contains(parent) {
+            &cfg.default_locale
+        } else {
+            parent
+        };
         let default_to = cfg
             .locales
             .iter()
@@ -722,13 +726,17 @@ impl ResolvedLocalesOrNamespaces {
     pub fn get_value_at(&self, loc: Loc) -> Option<&ResolvedValueOrSubkeys> {
         match self {
             ResolvedLocalesOrNamespaces::Locales(resolved_locales) => {
+                if loc.key_path.namespace.is_some() {
+                    return None;
+                }
                 let locale = resolved_locales.iter().find(|l| l.name == *loc.locale)?;
                 locale.values.get_value_at(&loc.key_path.path)
             }
             ResolvedLocalesOrNamespaces::Namespaces(resolved_namespaces) => {
+                let namespace = loc.key_path.namespace.as_ref()?;
                 let ns = resolved_namespaces
                     .iter()
-                    .find(|ns| ns.name == *loc.key_path.namespace.as_ref().unwrap())?;
+                    .find(|ns| ns.name == *namespace)?;
                 let locale = ns.locales.iter().find(|l| l.name == *loc.locale)?;
                 locale.values.get_value_at(&loc.key_path.path)
             }
@@ -742,15 +750,19 @@ impl ResolvedLocalesOrNamespaces {
     ) -> Option<ResolvedValueOrSubkeys> {
         match self {
             ResolvedLocalesOrNamespaces::Locales(resolved_locales) => {
+                if loc.key_path.namespace.is_some() {
+                    return None;
+                }
                 let locale = resolved_locales
                     .iter_mut()
                     .find(|l| l.name == *loc.locale)?;
                 locale.values.insert_at(&loc.key_path.path, value)
             }
             ResolvedLocalesOrNamespaces::Namespaces(resolved_namespaces) => {
+                let namespace = loc.key_path.namespace.as_ref()?;
                 let ns = resolved_namespaces
                     .iter_mut()
-                    .find(|ns| ns.name == *loc.key_path.namespace.as_ref().unwrap())?;
+                    .find(|ns| ns.name == *namespace)?;
                 let locale = ns.locales.iter_mut().find(|l| l.name == *loc.locale)?;
                 locale.values.insert_at(&loc.key_path.path, value)
             }

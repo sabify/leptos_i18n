@@ -441,7 +441,8 @@ fn merge_locale_plurals(
     }
 }
 
-type PossiblePlurals = BTreeMap<String, BTreeMap<PluralForm, (Key, PluralRuleType, RawValue)>>;
+type PossiblePlurals =
+    BTreeMap<String, (bool, BTreeMap<PluralForm, (Key, PluralRuleType, RawValue)>)>;
 
 fn merge_values_plurals(
     values: RawValues,
@@ -479,7 +480,7 @@ fn merge_values_plurals(
 
     let mut disabled_error_emitted = false;
 
-    for (base_key, mut plurals) in possible_plurals {
+    for (base_key, (_, mut plurals)) in possible_plurals {
         if plurals.len() == 1 {
             for (_, (key, _, value)) in plurals {
                 check_insert_value(
@@ -520,30 +521,11 @@ fn merge_values_plurals(
         }
 
         let mut forms = PluralForms::new_from_other(other);
-        let mut conflict_error_emitted = false;
 
-        for (form, (_, rule, value)) in plurals {
-            if rule == rule_type {
-                forms.insert_form(form, value);
-            } else if !core::mem::replace(&mut conflict_error_emitted, true) {
-                diag.emit_error(Error::ConflictingPluralRuleType {
-                    loc: pushed_loc.clone(),
-                });
-            }
+        for (form, (_, _, value)) in plurals {
+            forms.insert_form(form, value);
         }
         let count_key = Key::count();
-
-        if conflict_error_emitted {
-            merged_values.insert(
-                key,
-                RawValueOrSubkeys::Value(MergedPlurals::Plurals(Plurals {
-                    rule_type,
-                    count_key,
-                    forms,
-                })),
-            );
-            continue;
-        }
 
         let plural = Plurals {
             rule_type,
@@ -581,7 +563,13 @@ fn merge_value(
     diag: &Diagnostics,
 ) {
     if let Some((base_key, rule_type, plural_form)) = is_possible_plural(&key) {
-        let map = possible_plurals.entry(base_key.to_owned()).or_default();
+        let (conflict_emitted, map) = possible_plurals.entry(base_key.to_owned()).or_default();
+        if map.values().any(|(_, rule, _)| *rule != rule_type) {
+            if !core::mem::replace(conflict_emitted, true) {
+                diag.emit_error(Error::ConflictingPluralRuleType { loc: loc.clone() });
+            }
+            return;
+        }
 
         let value = match value {
             RawValueOrSubkeys::Value(v) => v,

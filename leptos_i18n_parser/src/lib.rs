@@ -6,6 +6,8 @@ pub mod error;
 mod extractor;
 pub mod formatters;
 mod parser;
+#[cfg(test)]
+mod regressions;
 pub mod utils;
 
 pub mod options {
