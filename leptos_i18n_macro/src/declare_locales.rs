@@ -11,22 +11,35 @@ use leptos_i18n_parser::{
     },
     utils::{Key, KeyPath, Loc, Location},
 };
-use proc_macro2::Span;
+use proc_macro2::{Span, TokenStream};
 use quote::ToTokens;
-use syn::{
-    Ident, LitStr, Token, parse::ParseBuffer, parse_macro_input, punctuated::Punctuated,
-    token::Comma,
-};
+use syn::{Ident, LitStr, Token, parse::ParseBuffer, punctuated::Punctuated, token::Comma};
 
 pub fn declare_locales(tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    declare_locales_inner(tokens.into()).into()
+}
+
+fn to_compile_error(err: impl Display) -> TokenStream {
+    let err = err.to_string();
+    quote::quote!(compile_error!(#err);)
+}
+
+fn declare_locales_inner(tokens: TokenStream) -> TokenStream {
     let ParsedInput {
         cfg,
         values,
         crate_path,
         interpolate_display,
-    } = parse_macro_input!(tokens as ParsedInput);
+    } = match syn::parse2::<ParsedInput>(tokens) {
+        Ok(input) => input,
+        Err(err) => return err.into_compile_error(),
+    };
 
-    let parsed_locales = extract_locales(values, cfg, None).unwrap();
+    let parsed_locales = match extract_locales(values, cfg, None) {
+        Ok(parsed_locales) => parsed_locales,
+        Err(err) => return to_compile_error(err),
+    };
+    let diag = &parsed_locales.diag;
 
     let codegen_options = CodegenOptions::new()
         .crate_path(Some(crate_path))
@@ -34,12 +47,14 @@ pub fn declare_locales(tokens: proc_macro::TokenStream) -> proc_macro::TokenStre
 
     let result = leptos_i18n_codegen::gen_code(&parsed_locales, codegen_options);
 
-    match result {
-        Ok(ts) => ts.into(),
-        Err(err) => {
-            let err = err.to_string();
-            quote::quote!(compile_error!(#err);).into()
-        }
+    let generated = match result {
+        Ok(ts) => ts,
+        Err(err) => to_compile_error(err),
+    };
+
+    quote::quote! {
+        const _: () = { #diag };
+        #generated
     }
 }
 
@@ -294,5 +309,77 @@ impl syn::parse::Parse for ParsedInput {
             crate_path,
             interpolate_display,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use quote::quote;
+
+    #[test]
+    fn invalid_foreign_key_emits_compile_error() {
+        let expanded = declare_locales_inner(quote! {
+            path: crate,
+            default: "en",
+            locales: ["en"],
+            en: { key: "$t(missing_key)" },
+        })
+        .to_string();
+        assert!(expanded.contains("compile_error"), "{expanded}");
+        assert!(expanded.contains("Invalid foreign key"), "{expanded}");
+        assert!(expanded.contains("missing_key"), "{expanded}");
+    }
+
+    #[test]
+    fn subkey_mismatch_emits_compile_error() {
+        let expanded = declare_locales_inner(quote! {
+            path: crate,
+            default: "en",
+            locales: ["en", "fr"],
+            en: { key: { sub: "en" } },
+            fr: { key: "fr" },
+        })
+        .to_string();
+        assert!(expanded.contains("compile_error"), "{expanded}");
+        assert!(expanded.contains("subkey"), "{expanded}");
+    }
+
+    #[test]
+    fn warnings_are_emitted_in_an_anonymous_const() {
+        let expanded = declare_locales_inner(quote! {
+            path: crate,
+            default: "en",
+            locales: ["en", "fr"],
+            en: { key: "en" },
+            fr: {},
+        });
+        let expanded = expanded.to_string();
+        assert!(
+            expanded.starts_with("const _ : () = {"),
+            "diagnostics must be scoped: {expanded}"
+        );
+        assert!(expanded.contains("deprecated"), "{expanded}");
+        assert!(expanded.contains("Missing key"), "{expanded}");
+        assert!(!expanded.contains("compile_error"), "{expanded}");
+    }
+
+    #[test]
+    fn valid_input_has_no_warning_functions() {
+        let expanded = declare_locales_inner(quote! {
+            path: crate,
+            default: "en",
+            locales: ["en"],
+            en: { key: "en" },
+        })
+        .to_string();
+        assert!(!expanded.contains("compile_error"), "{expanded}");
+        assert!(!expanded.contains("fn warnings"), "{expanded}");
+    }
+
+    #[test]
+    fn parse_error_emits_compile_error() {
+        let expanded = declare_locales_inner(quote! { default: "en" }).to_string();
+        assert!(expanded.contains("compile_error"), "{expanded}");
     }
 }

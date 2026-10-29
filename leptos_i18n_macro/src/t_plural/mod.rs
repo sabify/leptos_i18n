@@ -65,7 +65,7 @@ pub fn t_plural_inner(
     let match_arms = forms.iter().map(|(form, block)| quote!(#form => #block));
     let fallback = fallback.map(|(expr, span)| {
         let fb = quote_spanned! { span => _ };
-        quote!(#fb => #expr)
+        quote!(#fb => #expr,)
     });
 
     let ts = quote! {
@@ -73,7 +73,7 @@ pub fn t_plural_inner(
             #(
                 #match_arms,
             )*
-            #fallback,
+            #fallback
         }
     };
 
