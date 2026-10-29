@@ -1273,6 +1273,9 @@ macro_rules! render_proxy {
 #[macro_export]
 #[cfg(all(feature = "dynamic_load", not(feature = "ssr")))]
 macro_rules! render_proxy {
+    (@display $($tt:tt)*) => {
+        $crate::render_inner!(@display $($tt)*)
+    };
     ($($tt:tt)*) => {
         $crate::__private::future_renderer($crate::render_inner!($($tt)*))
     };
@@ -1285,7 +1288,7 @@ macro_rules! render_proxy {
     (@display $($tt:tt)*) => {
         {
             let d = $crate::render_inner!(@display $($tt)*);
-            move async { d }
+            async move { d }
         }
     };
 
@@ -1293,3 +1296,7 @@ macro_rules! render_proxy {
         $crate::render_inner!($($tt)*)
     };
 }
+
+#[cfg(all(test, feature = "dynamic_load"))]
+#[path = "dynamic_load_tests.rs"]
+mod dynamic_load_tests;

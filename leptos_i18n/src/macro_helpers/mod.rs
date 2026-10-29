@@ -187,19 +187,13 @@ pub fn key_to_string<A: DisplayArgs>(key: DisplayKey<A>) -> String {
 }
 
 #[doc(hidden)]
-#[cfg(all(feature = "dynamic_load", not(feature = "ssr")))]
+#[cfg(feature = "dynamic_load")]
 pub async fn key_to_string<A, F>(key: F) -> String
 where
     A: DisplayArgs,
     F: Future<Output = DisplayKey<A>>,
 {
     let key = key.await;
-    key.to_string()
-}
-
-#[doc(hidden)]
-#[cfg(all(feature = "dynamic_load", feature = "ssr"))]
-pub async fn key_to_string<A: DisplayArgs>(key: DisplayKey<A>) -> String {
     key.to_string()
 }
 
