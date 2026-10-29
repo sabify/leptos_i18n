@@ -9,8 +9,22 @@ mod components;
 mod fmt;
 mod into_view;
 mod plurals;
+#[cfg(test)]
+mod tests;
 
 struct DummyFound;
+
+fn float_tokens(value: f64) -> TokenStream {
+    if value.is_nan() {
+        quote!(core::primitive::f64::NAN)
+    } else if value == f64::INFINITY {
+        quote!(core::primitive::f64::INFINITY)
+    } else if value == f64::NEG_INFINITY {
+        quote!(core::primitive::f64::NEG_INFINITY)
+    } else {
+        quote!(#value)
+    }
+}
 
 use crate::{
     CodegenOptions,
@@ -59,6 +73,7 @@ pub fn gen_values_modules_and_accessors(
     let data_ident = format_ident!("__data");
 
     let defaults = values.defaults.compute();
+    let str_key_path = path.to_string();
     let non_defaulted_locales: Vec<_> = locales
         .locales
         .iter()
@@ -175,6 +190,7 @@ pub fn gen_values_modules_and_accessors(
             enum_ident,
             keys_ident,
             multi_kind,
+            options.show_keys_only.then_some(str_key_path.as_str()),
         );
         quote! {
             impl __l_i18n_crate::keys::comp_time::ConstArgsMarker for ArgsBuilder {
@@ -246,23 +262,31 @@ pub fn gen_values_modules_and_accessors(
         quote! {}
     };
 
-    let render_body = into_view::gen_render_body(
-        &non_defaulted_locales,
-        &defaults,
-        enum_ident,
-        keys_ident,
-        &locale_field,
-    );
+    let render_body = if options.show_keys_only {
+        Ok(quote!(#str_key_path))
+    } else {
+        into_view::gen_render_body(
+            &non_defaulted_locales,
+            &defaults,
+            enum_ident,
+            keys_ident,
+            &locale_field,
+        )
+    };
 
-    let fmt_body = fmt::gen_fmt_body(
-        &non_defaulted_locales,
-        &defaults,
-        enum_ident,
-        keys_ident,
-        &locale_field,
-        &formatter_ident,
-        &data_ident,
-    );
+    let fmt_body = if options.show_keys_only {
+        Ok(quote!(#formatter_ident.write_str(#str_key_path)))
+    } else {
+        fmt::gen_fmt_body(
+            &non_defaulted_locales,
+            &defaults,
+            enum_ident,
+            keys_ident,
+            &locale_field,
+            &formatter_ident,
+            &data_ident,
+        )
+    };
 
     let render_fn = match render_body {
         Ok(render_body) => quote! {
@@ -312,8 +336,6 @@ pub fn gen_values_modules_and_accessors(
             }
         }
     };
-
-    let str_key_path = path.to_string();
 
     quote! {
         #docs

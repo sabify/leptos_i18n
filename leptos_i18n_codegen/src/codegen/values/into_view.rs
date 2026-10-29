@@ -192,7 +192,7 @@ pub fn gen_render_lit(
         }
         Literal::Signed(v) => quote!(#v),
         Literal::Unsigned(v) => quote!(#v),
-        Literal::Float(v) => quote!(#v),
+        Literal::Float(v) => super::float_tokens(*v),
         Literal::Bool(v) => quote!(#v),
     }
 }
@@ -203,6 +203,7 @@ pub fn gen_const_values_match_arms(
     enum_ident: &syn::Ident,
     keys_ident: &syn::Ident,
     multi_kind: bool,
+    show_key: Option<&str>,
 ) -> impl Iterator<Item = TokenStream> {
     non_defaulted_locales.iter().map(move |(locale, value)| {
         let loc_ident = &*locale.name.key.ident;
@@ -213,7 +214,16 @@ pub fn gen_const_values_match_arms(
                 .collect::<TokenStream>()
         });
 
-        let ts = gen_const_value(value, locale, keys_ident, multi_kind);
+        let ts = if let Some(key) = show_key {
+            match value {
+                _ if multi_kind => quote!(__l_i18n_crate::keys::comp_time::Literal::String(#key)),
+                Value::Literal(Literal::String(_)) => quote!(#key),
+                Value::Bloc(_) => quote!(&[__l_i18n_crate::keys::comp_time::Literal::String(#key)]),
+                _ => gen_const_value(value, locale, keys_ident, multi_kind),
+            }
+        } else {
+            gen_const_value(value, locale, keys_ident, multi_kind)
+        };
 
         quote! {
             #enum_ident::#loc_ident #defaults => #ts
@@ -232,7 +242,7 @@ fn gen_const_value(
 
     match tokens.as_mut_slice() {
         [] => unreachable!("should have at least one value"),
-        [single] => core::mem::take(single),
+        [single] if !matches!(value, Value::Bloc(_)) => core::mem::take(single),
         values if multi_kind => quote! {{
             const __VALUES: &[__l_i18n_crate::keys::comp_time::Literal<__l_i18n_crate::keys::comp_time::NoRecurse>] = &[#(#values,)*];
             __l_i18n_crate::keys::comp_time::Literal::Multiple(__VALUES)
@@ -255,7 +265,7 @@ fn flatten_const_value(
         Value::Literal(literal) => literal,
         Value::Bloc(values) => {
             for value in values {
-                flatten_const_value(value, locale, tokens, keys_ident, multi_kind);
+                flatten_const_value(value, locale, tokens, keys_ident, true);
             }
             return;
         }
@@ -311,6 +321,7 @@ fn flatten_const_value(
             quote!(__l_i18n_crate::keys::comp_time::Literal::Unsigned(#n))
         }
         Literal::Float(n) if multi_kind => {
+            let n = super::float_tokens(*n);
             quote!(__l_i18n_crate::keys::comp_time::Literal::Float(#n))
         }
         Literal::Bool(n) if multi_kind => {
@@ -318,7 +329,7 @@ fn flatten_const_value(
         }
         Literal::Signed(n) => quote!(#n),
         Literal::Unsigned(n) => quote!(#n),
-        Literal::Float(n) => quote!(#n),
+        Literal::Float(n) => super::float_tokens(*n),
         Literal::Bool(n) => quote!(#n),
     };
 

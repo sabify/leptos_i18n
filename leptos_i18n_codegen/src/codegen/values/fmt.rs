@@ -151,9 +151,10 @@ pub fn gen_fmt_lit(
         Literal::Unsigned(n) => quote! {
             core::fmt::Display::fmt(&#n, #formatter_ident)
         },
-        Literal::Float(n) => quote! {
-            core::fmt::Display::fmt(&#n, #formatter_ident)
-        },
+        Literal::Float(n) => {
+            let n = super::float_tokens(*n);
+            quote!(core::fmt::Display::fmt(&#n, #formatter_ident))
+        }
         Literal::Bool(n) => quote! {
             core::fmt::Display::fmt(&#n, #formatter_ident)
         },

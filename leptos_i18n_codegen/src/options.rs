@@ -19,7 +19,7 @@ pub struct CodegenOptions<'a> {
     /// Generate docs on `Locale` enum, subkeys, namespaces keys, and interpolations to display available keys or required arguments.
     /// `true` by default
     pub gen_docs: bool,
-    pub suppress_key_warnings: bool,
+    /// Retained for compatibility; display interpolation is always generated, so this has no effect.
     pub interpolate_display: bool,
     pub show_keys_only: bool,
     pub translations_uri: Option<Cow<'a, str>>,
@@ -42,7 +42,6 @@ impl<'a> CodegenOptions<'a> {
             module_file_name: DEFAULT_FILE_NAME.as_ref(),
             crate_path: None,
             gen_docs: true,
-            suppress_key_warnings: false,
             interpolate_display: false,
             show_keys_only: false,
             translations_uri: None,
@@ -55,7 +54,7 @@ impl<'a> CodegenOptions<'a> {
     /// # Example
     ///
     /// ```
-    /// # use leptos_i18n_build::options::CodegenOptions;
+    /// # use leptos_i18n_codegen::CodegenOptions;
     /// let attributes = "#![allow(missing_docs)]".parse().unwrap();
     /// let options = CodegenOptions::new().top_level_attributes(Some(attributes));
     /// ```
@@ -85,13 +84,7 @@ impl<'a> CodegenOptions<'a> {
         Self { gen_docs, ..self }
     }
 
-    pub fn suppress_key_warnings(self, suppress_key_warnings: bool) -> Self {
-        Self {
-            suppress_key_warnings,
-            ..self
-        }
-    }
-
+    /// Retained for compatibility; display interpolation is always generated, so this has no effect.
     pub fn interpolate_display(self, interpolate_display: bool) -> Self {
         Self {
             interpolate_display,

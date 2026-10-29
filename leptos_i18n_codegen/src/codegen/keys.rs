@@ -62,7 +62,8 @@ fn gen_subkeys_module_and_accessor(
         keys, keys_ident, enum_ident, locales, builders, &docs, &mut path, crate_path, options,
     );
 
-    let scope_marker = crate::utils::scope_marker::key_to_scope_marker(&key.name, crate_path);
+    let scope_marker =
+        crate::utils::scope_marker::key_to_scope_marker(&key.ident.to_string(), crate_path);
 
     quote! {
 

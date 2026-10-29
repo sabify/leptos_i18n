@@ -94,8 +94,21 @@ pub fn gen_namespaces(
         let key = &*ns.name.ident;
         quote! {
             #docs
-            pub fn #key(self) -> #key::#keys_ident {
+            pub const fn #key(self) -> #key::#keys_ident {
                 #key::#keys_ident
+            }
+        }
+    });
+
+    let namespace_scope_impls = namespaces.iter().map(|ns| {
+        let key = &*ns.name.ident;
+        let marker = crate::utils::scope_marker::key_to_scope_marker(
+            &key.to_string(),
+            &syn::parse_quote!(__l_i18n_crate),
+        );
+        quote! {
+            impl __l_i18n_crate::scopes::markers::SubkeyKeyAccessor<#marker> for #keys_ident {
+                type Inner = #key::#keys_ident;
             }
         }
     });
@@ -142,6 +155,7 @@ pub fn gen_namespaces(
     quote! {
 
         #(#locales_impls)*
+        #(#namespace_scope_impls)*
 
         #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
         #[allow(non_snake_case)]
@@ -212,7 +226,7 @@ pub fn gen_namespaces(
                     #(
                         #deserialize_match_arms,
                     )*
-                    _ => Err(<D::Error as leptos_i18n::reexports::serde::de::Error>::custom(format!("invalid translation unit id: {s}")))
+                    _ => Err(<D::Error as __l_i18n_crate::reexports::serde::de::Error>::custom(format!("invalid translation unit id: {s}")))
                 }
             }
         }

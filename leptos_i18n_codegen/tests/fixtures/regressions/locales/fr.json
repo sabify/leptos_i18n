@@ -1,0 +1,5 @@
+{
+  "text": "bonjour", "with_arg": "{{count}}", "with_comp": "<b>enfant</b>",
+  "bloc": "avant $t(with_arg, {\"count\":45}) après", "mixed": 1,
+  "number": 45, "boolean": false, "my-key": {"child": "bonjour"}
+}

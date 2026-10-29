@@ -1,0 +1,4 @@
+nan: .nan
+inf: .inf
+neg_inf: -.inf
+finite: 1.5
