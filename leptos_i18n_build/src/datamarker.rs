@@ -70,7 +70,7 @@ impl FormatterOptions {
     /// Return a `Vec<DataMarkerInfo>` needed to use the given option.
     pub fn into_data_markers(self) -> Vec<DataMarkerInfo> {
         match self {
-            FormatterOptions::Plurals => icu::calendar::provider::MARKERS.to_vec(),
+            FormatterOptions::Plurals => icu::plurals::provider::MARKERS.to_vec(),
             FormatterOptions::FormatDateTime => [
                 icu::datetime::provider::MARKERS,
                 icu::plurals::provider::MARKERS,
@@ -90,5 +90,22 @@ impl FormatterOptions {
             .flat_map(|m| m.to_vec())
             .collect(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn plurals_contains_both_rule_markers_and_no_calendar_markers() {
+        let markers = FormatterOptions::Plurals.into_data_markers();
+        assert!(markers.contains(&icu::plurals::provider::PluralsCardinalV1::INFO));
+        assert!(markers.contains(&icu::plurals::provider::PluralsOrdinalV1::INFO));
+        assert!(
+            icu::calendar::provider::MARKERS
+                .iter()
+                .all(|marker| !markers.contains(marker))
+        );
     }
 }

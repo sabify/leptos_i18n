@@ -75,7 +75,6 @@ impl TranslationsInfos {
             tracked_files,
         } = parse_locales_raw(dir_path, cfg)?;
 
-        // We don't really care for warnings, they will already be displayed by the macro
         let parsed_locales = extract_locales(values, cfg, Some(diag))?;
 
         Ok(TranslationsInfos {
@@ -218,30 +217,27 @@ impl TranslationsInfos {
     }
 
     /// Same as `generate_data` but can be supplied additionnal ICU `DataMarker`.
+    ///
+    /// `mod_directory` is recursively removed before generation, see [`Self::generate_data`].
     pub fn generate_data_with_data_markers(
         &self,
         mod_directory: PathBuf,
         keys: impl IntoIterator<Item = DataMarkerInfo>,
     ) -> Result<ExportMetadata, DataError> {
-        // This is'nt really needed, but ICU4X wants the directory to be empty
-        // and Rust Analyzer can trigger the build.rs without cleaning the out directory.
-        if mod_directory.exists() {
-            std::fs::remove_dir_all(&mod_directory).unwrap();
-        }
-
         let exporter = BakedExporter::new(mod_directory, {
             let mut options = baked_exporter::Options::default();
             options.overwrite = true;
             options.use_internal_fallback = false;
             options
-        })
-        .unwrap();
+        })?;
 
         self.build_datagen_driver_with_data_keys(keys)
             .export(&SourceDataProvider::new(), exporter)
     }
 
     /// Same as `generate_data` but can be supplied additionnal options.
+    ///
+    /// `mod_directory` is recursively removed before generation, see [`Self::generate_data`].
     pub fn generate_data_with_options(
         &self,
         mod_directory: PathBuf,
@@ -251,6 +247,9 @@ impl TranslationsInfos {
     }
 
     /// Generate an ICU datagen at the given mod_directory using the infos from the translations.
+    ///
+    /// If `mod_directory` already exists it is recursively removed before generation.
+    /// Use a directory dedicated to this data, typically under `OUT_DIR`.
     pub fn generate_data(&self, mod_directory: PathBuf) -> Result<ExportMetadata, DataError> {
         self.generate_data_with_options(mod_directory, std::iter::empty())
     }
@@ -438,16 +437,75 @@ impl<'a> LocaleTranslations<'a> {
     }
 }
 
+// Rust's Debug escaping uses `\0` and `\u{...}`, which are invalid in JSON.
+fn write_json_str(f: &mut std::fmt::Formatter<'_>, s: &str) -> std::fmt::Result {
+    f.write_char('"')?;
+    let mut copied = 0;
+    for (index, c) in s.char_indices() {
+        let escape = match c {
+            '"' => "\\\"",
+            '\\' => "\\\\",
+            '\u{8}' => "\\b",
+            '\u{c}' => "\\f",
+            '\n' => "\\n",
+            '\r' => "\\r",
+            '\t' => "\\t",
+            _ if c >= '\u{20}' => continue,
+            _ => {
+                f.write_str(&s[copied..index])?;
+                write!(f, "\\u{:04x}", c as u32)?;
+                copied = index + c.len_utf8();
+                continue;
+            }
+        };
+        f.write_str(&s[copied..index])?;
+        f.write_str(escape)?;
+        copied = index + c.len_utf8();
+    }
+    f.write_str(&s[copied..])?;
+    f.write_char('"')
+}
+
 impl Display for TranslationsFormatter<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_char('[')?;
         let mut iter = self.strings.iter();
         if let Some(first) = iter.next() {
-            write!(f, "{first:?}")?;
+            write_json_str(f, first)?;
         }
         for s in iter {
-            write!(f, ",{s:?}")?;
+            f.write_char(',')?;
+            write_json_str(f, s)?;
         }
         f.write_char(']')
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn translations_match_serde_json_and_round_trip() {
+        let control_characters: String = (0..=0x9f).map(char::from).collect();
+        let strings = [
+            "",
+            "a\0b",
+            "\u{7}\u{8}\u{c}\n\r\t\u{1f}",
+            "x\u{7f}y",
+            "\u{301}a",
+            r#"quotes " and backslashes \"#,
+            "héllo 🎉\u{2028}\u{2029}\u{10ffff}",
+            &control_characters,
+        ];
+        for strings in [&strings[..0], &strings[..1], &strings[..]] {
+            let owned: Vec<Rc<str>> = strings.iter().copied().map(Rc::from).collect();
+            let rendered = TranslationsFormatter { strings: &owned }.to_string();
+            assert_eq!(rendered, serde_json::to_string(strings).unwrap());
+            assert_eq!(
+                serde_json::from_str::<Vec<String>>(&rendered).unwrap(),
+                strings
+            );
+        }
     }
 }
