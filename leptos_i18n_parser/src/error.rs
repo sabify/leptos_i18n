@@ -693,3 +693,27 @@ pub fn generate_warnings(warnings: &[Warning]) -> Option<TokenStream> {
         Some(generate_warnings_inner(warnings))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Warning;
+    use crate::{
+        options::Config,
+        utils::{Key, KeyPath, Location},
+    };
+
+    #[test]
+    fn missing_key_warning_displays_locale_name() {
+        let cfg = Config::new("fr").unwrap();
+        let warning = Warning::MissingKey {
+            loc: Location::new(
+                cfg.locales[0].clone(),
+                KeyPath {
+                    namespace: None,
+                    path: vec![Key::new("x").unwrap()],
+                },
+            ),
+        };
+        assert_eq!(warning.to_string(), "Missing key \"x\" in locale \"fr\"");
+    }
+}

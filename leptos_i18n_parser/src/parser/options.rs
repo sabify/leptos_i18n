@@ -18,10 +18,16 @@ use std::{
     sync::Arc,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct LocaleName {
     pub key: Key,
     pub loc_id: Rc<icu_locale::Locale>,
+}
+
+impl Debug for LocaleName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Debug::fmt(&self.key, f)
+    }
 }
 
 impl Ord for LocaleName {
