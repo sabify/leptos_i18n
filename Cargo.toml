@@ -25,31 +25,32 @@ leptos_i18n_build = { path = "./leptos_i18n_build", version = "0.6.2", default-f
 
 # non-members
 # leptos
-leptos = { version = "0.8", default-features = false }
-leptos_router = { version = "0.8", default-features = false }
-leptos_meta = { version = "0.8", default-features = false }
+leptos = { version = "0.9.0-rc0", default-features = false }
+leptos_router = { version = "0.9.0-rc0", default-features = false }
+leptos_meta = { version = "0.9.0-rc0", default-features = false }
 
 # icu
-icu = { version = "2.2", default-features = false }
-icu_locale = { version = "2.2", default-features = false }
-icu_provider = { version = "2.2", default-features = false }
+icu = { version = "2.4", default-features = false }
+icu_locale = { version = "2.4", default-features = false }
+icu_provider = { version = "2.4", default-features = false }
 fixed_decimal = { version = "0.7", default-features = false }
-icu_provider_export = { version = "2.2", default-features = false }
-icu_provider_source = { version = "2.2", default-features = false }
-icu_plurals = { version = "2.2", default-features = false }
-icu_datetime = { version = "2.2", default-features = false }
-icu_calendar = { version = "2.2", default-features = false }
-icu_list = { version = "2.2", default-features = false }
-icu_decimal = { version = "2.2", default-features = false }
-icu_experimental = { version = "0.5", default-features = false }
+icu_provider_export = { version = "2.4", default-features = false }
+icu_provider_source = { version = "2.4", default-features = false }
+icu_plurals = { version = "2.4", default-features = false }
+icu_datetime = { version = "2.4", default-features = false }
+icu_calendar = { version = "2.4", default-features = false }
+icu_list = { version = "2.4", default-features = false }
+icu_decimal = { version = "2.4", default-features = false }
+icu_experimental = { version = "0.7", default-features = false }
 tinystr = { default-features = false, version = "0.8" }
 
 default-struct-builder = { default-features = false, version = "0.5" }
 serde_json = { default-features = false, version = "1.0" }
 futures = { default-features = false, version = "0.3" }
-leptos-use = { default-features = false, version = "0.18" }
+leptos-use-cookie = { default-features = false, version = "0.20" }
+leptos-use-locales = { default-features = false, version = "0.20" }
 writeable = { default-features = false, version = "0.6" }
-prettyplease = { default-features = false, version = "0.2" }
+prettyplease = { default-features = false, version = "0.3" }
 serde-wasm-bindgen = { default-features = false, version = "0.6" }
 serde_yaml = { default-features = false, version = "0.9" }
 codee = { default-features = false, version = "0.3" }
@@ -58,7 +59,7 @@ quote = { default-features = false, version = "1.0" }
 toml = { default-features = false, version = "1.1" }
 async-once-cell = { default-features = false, version = "0.5" }
 wasm-bindgen = { default-features = false, version = "0.2" }
-syn = { default-features = false, version = "2.0" }
+syn = { default-features = false, version = "3.0" }
 # typed-builder = { default-features = false, version = "0.23" }
 proc-macro2 = { default-features = false, version = "1.0" }
 serde = { default-features = false, version = "1.0" }

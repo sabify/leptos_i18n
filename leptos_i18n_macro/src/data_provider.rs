@@ -120,9 +120,19 @@ pub fn derive_icu_data_provider(input: proc_macro::TokenStream) -> proc_macro::T
                 fn try_new_currency_formatter(
                 &self,
                 locale: &leptos_i18n::reexports::icu::locid::Locale,
+                currency_code: leptos_i18n::reexports::icu::currency::CurrencyType,
                 options: leptos_i18n::reexports::icu::currency::options::CurrencyFormatterOptions
-            ) -> Result<leptos_i18n::reexports::icu::currency::formatter::CurrencyFormatter, leptos_i18n::reexports::icu::provider::DataError> {
-                leptos_i18n::reexports::icu::currency::formatter::CurrencyFormatter::try_new_unstable(self, locale.into(), options)
+            ) -> Result<leptos_i18n::reexports::icu::currency::formatter::CurrencyFormatter<leptos_i18n::reexports::icu::decimal::DecimalFormatter>, leptos_i18n::reexports::icu::provider::DataError> {
+                leptos_i18n::reexports::icu::currency::formatter::CurrencyFormatter::try_new_symbol_unstable(self, locale.into(), currency_code, options)
+            }
+
+            fn try_new_narrow_currency_formatter(
+                &self,
+                locale: &leptos_i18n::reexports::icu::locid::Locale,
+                currency_code: leptos_i18n::reexports::icu::currency::CurrencyType,
+                options: leptos_i18n::reexports::icu::currency::options::CurrencyFormatterOptions
+            ) -> Result<leptos_i18n::reexports::icu::currency::formatter::CurrencyFormatter<leptos_i18n::reexports::icu::decimal::DecimalFormatter>, leptos_i18n::reexports::icu::provider::DataError> {
+                leptos_i18n::reexports::icu::currency::formatter::CurrencyFormatter::try_new_symbol_narrow_unstable(self, locale.into(), currency_code, options)
             }
         }
     } else {

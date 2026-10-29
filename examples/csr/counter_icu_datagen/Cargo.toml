@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-leptos = { version = "0.8.15", features = ["csr"] }
-leptos_meta = { version = "0.8.5" }
+leptos = { version = "0.9.0-rc0", features = ["csr"] }
+leptos_meta = { version = "0.9.0-rc0" }
 leptos_i18n = { path = "../../../leptos_i18n", default-features = false, features = [
   "csr",
   "plurals",
@@ -15,21 +15,20 @@ leptos_i18n = { path = "../../../leptos_i18n", default-features = false, feature
   # experimental feature
   "format_currency",
 ] }
-serde = { version = "1", features = ["derive"] }
-console_error_panic_hook = { version = "0.1" }
-wasm-bindgen = { version = "0.2" }
+serde = { version = "1.0.229", features = ["derive"] }
+console_error_panic_hook = { version = "0.1.7" }
+wasm-bindgen = { version = "0.2.129" }
 
 # "default-features = false" to turn off compiled_data
-icu = { version = "2.2", default-features = false, features = [
+icu = { version = "2.4.0", default-features = false, features = [
   # feature only needed for experimental features (e.g "format_currency")
   "unstable",
 ] }
-icu_provider_baked = "2.2" # for databake
-icu_provider = "2.2" # for databake
-zerovec = "0.11" # for databake
+icu_provider = { version = "2.4.0", features = ["baked"] } # for databake
+zerovec = "0.11.9" # for databake
 
 # only needed for experimental features (e.g "format_currency")
-icu_pattern = "0.4" # for databake
+icu_pattern = "0.5.1" # for databake
 
 [build-dependencies.leptos_i18n_build]
 path = "../../../leptos_i18n_build"

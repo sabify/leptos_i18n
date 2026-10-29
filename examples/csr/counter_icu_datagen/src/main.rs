@@ -2,6 +2,9 @@
 
 pub mod app;
 
+// ICU 2.4's baked calendar data refers to the locale core crate by name.
+use icu::locale as icu_locale_core;
+
 include!(concat!(env!("OUT_DIR"), "/baked_data/mod.rs"));
 include!(concat!(env!("OUT_DIR"), "/i18n/mod.rs"));
 

@@ -75,3 +75,19 @@ fn number_formatting() {
     let fr = td_format!(Locale::fr, num, formatter: number);
     assert_eq_rendered!(fr, "2\u{202f}000,5");
 }
+
+#[test]
+fn currency_formatting_preserves_currency_and_width_in_cache() {
+    let eur = td_format_string!(Locale::en, 2000.5, formatter: currency(currency_code: EUR));
+    assert_eq!(eur, "€2,000.50");
+    let usd = td_format_string!(Locale::en, 2000.5, formatter: currency(currency_code: USD));
+    assert_eq!(usd, "$2,000.50");
+    let eur = td_format_display!(Locale::en, 2000.5, formatter: currency(currency_code: EUR));
+    assert_eq!(eur.to_string(), "€2,000.50");
+
+    let usd = td_format!(Locale::fr, || 2000.5, formatter: currency(currency_code: USD));
+    assert_eq_rendered!(usd, "2\u{202f}000,50\u{a0}$US");
+    let usd =
+        td_format!(Locale::fr, || 2000.5, formatter: currency(currency_code: USD; width: narrow));
+    assert_eq_rendered!(usd, "2\u{202f}000,50\u{a0}$");
+}

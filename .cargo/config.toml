@@ -1,0 +1,4 @@
+[patch.crates-io]
+# Temporary until leptos-use publishes support for Leptos 0.9.
+leptos-use-cookie = { git = "https://github.com/Synphonyte/leptos-use", branch = "leptos-0.9" }
+leptos-use-locales = { git = "https://github.com/Synphonyte/leptos-use", branch = "leptos-0.9" }

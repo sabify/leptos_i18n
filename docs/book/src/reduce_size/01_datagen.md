@@ -12,13 +12,15 @@ Great, we lost a lot of size, but now instead of having too much information, we
 
 ## 1. Datagen
 
-First, generate the information; you can use [`icu_datagen`](https://docs.rs/crate/icu4x-datagen/2.0.0) for that, either as a [CLI](https://github.com/unicode-org/icu4x/blob/main/tutorials/data-management.md#2-generating-data) or with a [build.rs](https://github.com/unicode-org/icu4x/blob/main/tutorials/cargo.md) (we will come back to it later).
+First, generate the information; you can use [`icu_datagen`](https://docs.rs/crate/icu4x-datagen/2.4.0) for that, either as a [CLI](https://github.com/unicode-org/icu4x/blob/main/tutorials/data-management.md#2-generating-data) or with a [build.rs](https://github.com/unicode-org/icu4x/blob/main/tutorials/cargo.md) (we will come back to it later).
 
 ## 2. Load
 
 Then you need to load those informations; this is as simple as
 
 ```rust,ignore
+use icu::locale as icu_locale_core;
+
 include!(concat!(env!("OUT_DIR"), "/baked_data/mod.rs"));
 
 pub struct MyDataProvider;
@@ -29,11 +31,16 @@ you will also need some dependencies:
 
 ```toml
 [dependencies]
+leptos_i18n = { version = "0.6", default-features = false, features = ["csr", "all_formats"] }
 # "default-features = false" to turn off compiled_data
-icu_provider_baked = "2.0.0" # for databake
-icu_provider = "2.0.0" # for databake
+icu = { version = "2.4", default-features = false }
+icu_provider = { version = "2.4", features = ["baked"] } # for databake
 zerovec = "0.11" # for databake
 ```
+
+This enables the CSR example's formatters. Keep only the formatting features your translations need.
+
+ICU 2.4's baked calendar data refers to `icu_locale_core` by name. The example uses the `icu::locale` alias above, so no separate `icu_locale_core` dependency is needed.
 
 This is explained more in depth in the `icu_datagen` doc.
 
@@ -42,7 +49,10 @@ This is explained more in depth in the `icu_datagen` doc.
 You now just need to tell `leptos_i18n` what provider to use. For that, you first need to implement `IcuDataProvider` for your provider. You can do it manually as it is straightforward, but the lib comes with a derive macro:
 
 ```rust,ignore
+use icu::locale as icu_locale_core;
+
 include!(concat!(env!("OUT_DIR"), "/baked_data/mod.rs"));
+include!(concat!(env!("OUT_DIR"), "/i18n/mod.rs"));
 
 #[derive(leptos_i18n::custom_provider::IcuDataProvider)]
 pub struct MyDataProvider;
@@ -54,6 +64,7 @@ so for CSR apps in the main function:
 
 ```rust,ignore
 fn main() {
+    use app::App;
     leptos_i18n::custom_provider::set_icu_data_provider(MyDataProvider);
     console_error_panic_hook::set_once();
     leptos::mount::mount_to_body(|| leptos::view! { <App /> })
@@ -65,6 +76,7 @@ and for SSR apps in both on hydrate and on server startup:
 ```rust,ignore
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn hydrate() {
+    use app::App;
     leptos_i18n::custom_provider::set_icu_data_provider(MyDataProvider);
     console_error_panic_hook::set_once();
     leptos::mount::hydrate_body(App);
@@ -77,6 +89,7 @@ pub fn hydrate() {
 async fn main() -> std::io::Result<()> {
     leptos_i18n::custom_provider::set_icu_data_provider(MyDataProvider);
     // ..
+    Ok(())
 }
 ```
 
@@ -84,11 +97,22 @@ async fn main() -> std::io::Result<()> {
 
 The doc for ICU4X datagen can be quite intimidating, but it is actually quite straightforward. Your build.rs can look like this:
 
+For this manual approach, add these build dependencies:
+
+```toml
+[build-dependencies]
+icu = { version = "2.4", default-features = false, features = ["datagen"] }
+icu_provider_export = { version = "2.4", default-features = false, features = ["baked_exporter"] }
+icu_provider_source = "2.4"
+```
+
 ```rust,ignore
+use icu::locale::LocaleFallbacker;
 use icu_provider_export::{
     baked_exporter::{self, BakedExporter},
-    DataLocaleFamily, DeduplicationStrategy, ExportDriver, ExportMetadata,
+    DataLocaleFamily, DeduplicationStrategy, ExportDriver,
 };
+use icu_provider_source::SourceDataProvider;
 use std::path::PathBuf;
 
 fn main() {
@@ -105,15 +129,18 @@ fn main() {
     .unwrap();
 
     ExportDriver::new(
-        &[locale!("en"), locale!("fr")],
+        ["en".parse::<DataLocaleFamily>().unwrap(), "fr".parse().unwrap()],
         DeduplicationStrategy::None.into(),
         LocaleFallbacker::new_without_data(),
     )
-    .with_markers(&[icu::plurals::provider::MARKERS]);
+    .with_markers(icu::plurals::provider::MARKERS.iter().copied())
+    .export(&SourceDataProvider::new(), exporter)
+    .unwrap();
 }
 ```
 
 Here we are generating the information for locales `"en"` and `"fr"`, with the data needed for plurals.
+For this manual example, enable only `plurals` as a formatting feature in `leptos_i18n`, or add the markers needed for your other enabled formatters.
 
 ## Using `leptos_i18n_build` Crate
 
@@ -121,10 +148,12 @@ You can use the `leptos_i18n_build` crate that contains utils for the datagen.
 The problem with the above `build.rs` is that it can go out of sync with your translations,
 when all information is already in the translations.
 
+The build dependency below matches the CSR example; omit its `csr` feature for SSR/hydration builds.
+
 ```toml
 # Cargo.toml
 [build-dependencies]
-leptos_i18n_build = "0.6.0"
+leptos_i18n_build = { version = "0.6", features = ["pretty_print", "csr"] }
 ```
 
 ```rust,ignore
@@ -136,14 +165,18 @@ fn main() {
     println!("cargo::rerun-if-changed=Cargo.toml");
 
     let mod_directory = PathBuf::from(std::env::var_os("OUT_DIR").unwrap()).join("baked_data");
+    let i18n_mod_directory = PathBuf::from(std::env::var_os("OUT_DIR").unwrap()).join("i18n");
 
-    let cfg: Config = // ...;
+    let cfg = Config::new("en").unwrap().add_locale("fr").unwrap();
 
     let translations_infos = TranslationsInfos::parse(cfg).unwrap();
+
+    translations_infos.emit_diagnostics();
 
     translations_infos.rerun_if_locales_changed();
 
     translations_infos.generate_data(mod_directory).unwrap();
+    translations_infos.generate_i18n_module(i18n_mod_directory).unwrap();
 }
 ```
 
@@ -151,34 +184,32 @@ This will parse the config and the translations and generate the data for you us
 This will trigger a rerun if the config or translations changed and be kept in sync.
 If your code uses plurals, it will build with information for plurals. If it uses a formatter, it will build with the information for that formatter.
 
-If you use more data somehow, like for example using `t*_format!` with a formatter not used in the translations, there are functions to either supply additional options or keys:
+If you use more data, for example through `t*_format!` with a formatter not used in the translations, replace `generate_data` above with one of the following calls. Examples using ICU markers also need the `icu` build dependency shown in the manual setup.
 
 ```rust,ignore
-use leptos_i18n_build::Options;
+use leptos_i18n_build::FormatterOptions;
 
-translations_infos.generate_data_with_options(mod_directory, [Options::FormatDateTime]).unwrap();
+translations_infos.generate_data_with_options(mod_directory, [FormatterOptions::FormatDateTime]).unwrap();
 ```
 
 This will inject the ICU `DataMarker`s needed for the `date`, `time`, and `datetime` formatters.
 
 ```rust,ignore
-use leptos_i18n_build::Options;
-
 translations_infos.generate_data_with_data_markers(
     mod_directory,
-    &[icu::plurals::provider::MARKERS]
+    icu::plurals::provider::MARKERS.iter().copied()
 ).unwrap();
 ```
 
 This will inject the keys for cardinal and ordinal plurals.
 
-If you need both, `Options` can be turned into the needed keys:
+If you need both, `FormatterOptions` can be turned into the needed markers:
 
 ```rust,ignore
-use leptos_i18n_build::Options;
+use leptos_i18n_build::FormatterOptions;
 
-let mut markers = &[icu::plurals::provider::MARKERS];
-let markers.extend(Options::FormatDateTime.into_data_markers());
+let mut markers = icu::plurals::provider::MARKERS.to_vec();
+markers.extend(FormatterOptions::FormatDateTime.into_data_markers());
 
 // markers now contains the `DataMarker`s needed for plurals and for the `time`, `date` and `datetime` formatters.
 
@@ -195,18 +226,14 @@ I highly suggest taking the time to implement this.
 When using experimental features, such as "format_currency", if you follow the step above you will probably have some compilation error in the `impl_data_provider!` macro.
 To solve them you will need those few things:
 
-### Enable Experimental Feature
+### Enable the `unstable` Feature
 
-Enable the "experimental" feature for `icu`:
+Enable the "unstable" feature for `icu`:
 
 ```toml
 # Cargo.toml
 [dependencies]
-icu = {
-    version = "1.5.0",
-    default-features = false,
-    features = [ "experimental"]
-}
+icu = { version = "2.4", default-features = false, features = ["unstable"] }
 ```
 
 ### Import `icu_pattern`
@@ -214,7 +241,7 @@ icu = {
 ```toml
 # Cargo.toml
 [dependencies]
-icu_pattern = "0.2.0" # for databake
+icu_pattern = "0.5" # for databake
 ```
 
 ### Import the `alloc` Crate
@@ -224,8 +251,11 @@ The macro directly uses the `alloc` crate instead of std, so you must bring it i
 ```rust,ignore
 extern crate alloc;
 
+use icu::locale as icu_locale_core;
+
 include!(concat!(env!("OUT_DIR"), "/baked_data/mod.rs"));
 
+#[derive(leptos_i18n::custom_provider::IcuDataProvider)]
 pub struct MyDataProvider;
 impl_data_provider!(MyDataProvider);
 ```
