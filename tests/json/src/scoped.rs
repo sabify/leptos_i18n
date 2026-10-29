@@ -2,6 +2,14 @@ use crate::i18n::*;
 use tests_common::*;
 
 #[test]
+fn dashed_subkey_scope() {
+    type DashedScope = define_scope!(Locale, my_key);
+    for locale in [Locale::en, Locale::fr] {
+        assert_eq_rendered!(td!(locale.scope::<DashedScope>(), child), "dashed");
+    }
+}
+
+#[test]
 fn subkey_3() {
     let en_scope = scope_locale!(Locale::en, subkeys);
     let fr_scope = scope_locale!(Locale::fr, subkeys);
@@ -14,7 +22,7 @@ fn subkey_3() {
 
 #[test]
 fn define_scope_subkey_3() {
-    type SubkeysScope = define_scope!(crate::i18n, subkeys);
+    type SubkeysScope = define_scope!(Locale, subkeys);
 
     let en_scope = Locale::en.scope::<SubkeysScope>();
     let fr_scope = Locale::fr.scope::<SubkeysScope>();

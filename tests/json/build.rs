@@ -18,6 +18,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     translations_infos.rerun_if_locales_changed();
 
     translations_infos.generate_i18n_module_with_options(i18n_mod_directory, codegen_options)?;
+    let keys_only_directory = PathBuf::from(std::env::var_os("OUT_DIR").unwrap()).join("keys_only");
+    translations_infos.generate_i18n_module_with_options(
+        keys_only_directory,
+        CodegenOptions::default().show_keys_only(true),
+    )?;
 
     Ok(())
 }

@@ -53,9 +53,24 @@ fn foreign_key_to_explicit_default() {
 
 #[test]
 fn populated_foreign_key() {
+    use leptos_i18n::keys::comp_time::Literal;
+    let parts = crate::i18n::keys::populated_foreign_key::__const_value(Locale::en);
+    assert_eq!(parts, &[
+        Literal::String("before You clicked "),
+        Literal::Unsigned(45),
+        Literal::String(" times after"),
+    ]);
     let en = td!(Locale::en, populated_foreign_key);
     assert_eq_rendered!(en, "before You clicked 45 times after");
     let fr = td!(Locale::fr, populated_foreign_key);
+    assert_eq_rendered!(fr, "before Vous avez cliqué 32 fois after");
+}
+
+#[test]
+fn populated_foreign_key_string_arg() {
+    let en = td!(Locale::en, populated_foreign_key_string_arg);
+    assert_eq_rendered!(en, "before You clicked 45 times after");
+    let fr = td!(Locale::fr, populated_foreign_key_string_arg);
     assert_eq_rendered!(fr, "before Vous avez cliqué 32 fois after");
 }
 

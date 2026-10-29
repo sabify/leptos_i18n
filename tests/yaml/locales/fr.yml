@@ -6,3 +6,6 @@ subkeys:
   subkey_2: <b>subkey_2</b>
 defaulted_string:
 defaulted_interpolation: ~
+nan: .nan
+inf: .inf
+neg_inf: -.inf

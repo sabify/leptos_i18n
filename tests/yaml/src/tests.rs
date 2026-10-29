@@ -2,6 +2,18 @@ use crate::i18n::*;
 use tests_common::*;
 
 #[test]
+fn non_finite_floats() {
+    for locale in [Locale::en, Locale::fr] {
+        assert!(crate::i18n::keys::nan::__const_value(locale).is_nan());
+        assert_eq!(crate::i18n::keys::inf::__const_value(locale), f64::INFINITY);
+        assert_eq!(crate::i18n::keys::neg_inf::__const_value(locale), f64::NEG_INFINITY);
+        assert_eq_rendered!(td!(locale, nan), "NaN");
+        assert_eq!(td_string!(locale, inf), "inf");
+        assert_eq_rendered!(td!(locale, neg_inf), "-inf");
+    }
+}
+
+#[test]
 fn click_to_change_lang() {
     let en = td!(Locale::en, click_to_change_lang);
     assert_eq_rendered!(en, "Click to change language");

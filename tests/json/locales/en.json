@@ -2,6 +2,7 @@
   "click_to_change_lang": "Click to change language",
   "click_count": "You clicked {{ count }} times",
   "click_to_inc": "Click to increment the counter",
+  "my-key": {"child": "dashed"},
   "subkeys": {
     "subkey_1": "subkey_1",
     "subkey_2": "<b>subkey_2</b>",
@@ -17,7 +18,8 @@
   "foreign_key_to_interpolation": "before $t(click_count) after",
   "foreign_key_to_subkey": "before $t(subkeys.subkey_1) after",
   "foreign_key_to_explicit_default": "no explicit default in default locale",
-  "populated_foreign_key": "before $t(click_count, {\"count\": \"45\" }) after",
+  "populated_foreign_key": "before $t(click_count, {\"count\": 45 }) after",
+  "populated_foreign_key_string_arg": "before $t(click_count, {\"count\": \"45\" }) after",
   "populated_foreign_key_with_arg": "before $t(click_count, {\"count\": \"{{ new_count }}\" }) after",
   "populated_foreign_key_with_foreign_key_arg": "before $t(click_count, {\"count\": \"$t(subkeys.subkey_1)\" }) after",
   "interpolate_variable_and_comp": "<b>{{ count }}</b>",

@@ -7,3 +7,6 @@ subkeys:
   subkey_2: "<b>subkey_2</b>"
 defaulted_string: this string is declared in locale en
 defaulted_interpolation: this interpolation is declared in locale {{ locale }}
+nan: .nan
+inf: .inf
+neg_inf: -.inf

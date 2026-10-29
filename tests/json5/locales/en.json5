@@ -1,4 +1,5 @@
 {
+  nan: NaN, inf: Infinity, neg_inf: -Infinity,
   click_to_change_lang: "Click to change language",
   click_count: "You clicked {{ count }} times",
   click_to_inc: "Click to increment the counter",
