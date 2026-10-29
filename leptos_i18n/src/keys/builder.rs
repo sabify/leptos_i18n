@@ -1,14 +1,13 @@
 //! Builders for translation keys and their interpolation arguments.
 
-use std::fmt::Debug;
-use std::hash::Hash;
-use std::marker::PhantomData;
+use std::{fmt::Debug, hash::Hash, marker::PhantomData};
 
-use super::Key;
-use super::KeyId;
-use super::comp_time::{ConstArgs, ConstArgsMarker};
-use super::display::{DisplayArgsBuilder, DisplayArgsMarker};
-use super::view::IntoViewArgsMarker;
+use super::{
+    Key, KeyId,
+    comp_time::{ConstArgs, ConstArgsMarker},
+    display::{DisplayArgsBuilder, DisplayArgsMarker},
+    view::IntoViewArgsMarker,
+};
 use crate::locale_traits::BaseLocale;
 
 /// A translation key identifier ready to receive interpolation arguments.

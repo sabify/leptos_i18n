@@ -1,7 +1,6 @@
 //! Literal translation values and argument types without interpolations.
 
-use super::args::Args;
-use super::builder::ArgsBuilder;
+use super::{args::Args, builder::ArgsBuilder};
 
 /// Marks a builder for a translation requiring no interpolation arguments.
 pub trait ConstArgsMarker: ArgsBuilder {

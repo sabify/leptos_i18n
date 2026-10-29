@@ -1,8 +1,12 @@
 use icu_provider::{DataMarker, DataMarkerInfo};
-use leptos_i18n_parser::extraction::InterpolationKeys;
-use leptos_i18n_parser::formatters::{self, FormatterToTokens, VarBound};
-use std::any::{Any, TypeId};
-use std::collections::HashSet;
+use leptos_i18n_parser::{
+    extraction::InterpolationKeys,
+    formatters::{self, FormatterToTokens, VarBound},
+};
+use std::{
+    any::{Any, TypeId},
+    collections::HashSet,
+};
 
 /// This enum represent the different `Formatters` and options your translations could be using.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

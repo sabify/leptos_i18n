@@ -10,10 +10,12 @@ use std::{
     path::PathBuf,
 };
 
-use crate::extractor::values::plurals::{PluralForm, PluralRuleType};
-use crate::utils::{
-    Location,
-    key::{Key, KeyPath},
+use crate::{
+    extractor::values::plurals::{PluralForm, PluralRuleType},
+    utils::{
+        Location,
+        key::{Key, KeyPath},
+    },
 };
 
 #[derive(Debug)]

@@ -1,5 +1,4 @@
-use super::{Formatter, FormatterToTokens};
-use super::{impl_formatter, impl_from_arg, impl_to_tokens};
+use super::{Formatter, FormatterToTokens, impl_formatter, impl_from_arg, impl_to_tokens};
 use crate::utils::Key;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};

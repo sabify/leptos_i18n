@@ -1,7 +1,6 @@
 //! Translation keys, argument builders, and rendering traits.
 
-use std::fmt::Debug;
-use std::hash::Hash;
+use std::{fmt::Debug, hash::Hash};
 
 pub mod args;
 pub mod builder;

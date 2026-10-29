@@ -9,15 +9,16 @@ use crate::{
     extractor::values::{
         Value, Values,
         foreign_key::{ResolvedLocale, ResolvedLocalesOrNamespaces, ResolvedNamespace},
+        plurals,
     },
-    parser::{dummy::DummyArg, options::LocaleName},
-    utils::{KeyPath, Location},
+    formatters::VarBound,
+    parser::{
+        dummy::DummyArg,
+        locale::RawLocalesOrNamespaces,
+        options::{Config, LocaleName},
+    },
+    utils::{Key, KeyPath, Location},
 };
-use crate::{
-    extractor::values::plurals,
-    parser::{locale::RawLocalesOrNamespaces, options::Config},
-};
-use crate::{formatters::VarBound, utils::Key};
 
 pub mod defaults;
 pub mod values;

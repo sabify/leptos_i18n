@@ -12,11 +12,11 @@ use icu_provider_export::{
     baked_exporter::{self, BakedExporter},
 };
 use icu_provider_source::SourceDataProvider;
-use leptos_i18n_parser::extraction::{
-    Locales, LocalesOrNamespaces, ParsedLocales, extract_locales,
+use leptos_i18n_parser::{
+    error::Result,
+    extraction::{Locales, LocalesOrNamespaces, ParsedLocales, extract_locales},
+    parsing::{RawParsedLocales, parse_locales_raw},
 };
-use leptos_i18n_parser::parsing::parse_locales_raw;
-use leptos_i18n_parser::{error::Result, parsing::RawParsedLocales};
 use std::{
     collections::HashSet,
     fmt::{Display, Write},
@@ -39,8 +39,10 @@ pub mod options {
 
 /// Module for custom formatters.
 pub mod formatter {
-    pub use leptos_i18n_parser::formatters::{Formatter, FormatterToTokens};
-    pub use leptos_i18n_parser::utils::Key;
+    pub use leptos_i18n_parser::{
+        formatters::{Formatter, FormatterToTokens},
+        utils::Key,
+    };
 }
 
 #[derive(Clone)]

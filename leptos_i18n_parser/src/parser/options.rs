@@ -9,8 +9,7 @@ use parser::Parser;
 use std::{
     borrow::Cow,
     collections::BTreeMap,
-    fmt::Debug,
-    fmt::Display,
+    fmt::{Debug, Display},
     io::Read,
     panic::Location,
     path::{Path, PathBuf},

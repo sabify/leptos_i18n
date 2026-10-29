@@ -2,12 +2,16 @@
 
 use crate::locale_traits::BaseLocale;
 
-use super::Key;
-use super::args::{AnyArgsId, AnyArgsInner, Args};
-use super::builder::ArgsBuilder;
-use std::fmt::{Debug, Display};
-use std::marker::PhantomData;
-use std::sync::Arc;
+use super::{
+    Key,
+    args::{AnyArgsId, AnyArgsInner, Args},
+    builder::ArgsBuilder,
+};
+use std::{
+    fmt::{Debug, Display},
+    marker::PhantomData,
+    sync::Arc,
+};
 
 /// Formats a translation with its interpolation arguments.
 pub trait DisplayArgs: Args {

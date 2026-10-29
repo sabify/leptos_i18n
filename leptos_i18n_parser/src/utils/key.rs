@@ -1,6 +1,8 @@
-use crate::error::{Error, Result};
-use crate::extractor::VAR_COUNT_KEY;
-use crate::utils::Loc;
+use crate::{
+    error::{Error, Result},
+    extractor::VAR_COUNT_KEY,
+    utils::Loc,
+};
 use std::{
     fmt::{Debug, Display},
     hash::Hash,

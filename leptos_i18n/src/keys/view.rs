@@ -2,14 +2,18 @@
 
 use std::marker::PhantomData;
 
-use leptos::IntoView;
-use leptos::prelude::{AnyView, IntoAny};
+use leptos::{
+    IntoView,
+    prelude::{AnyView, IntoAny},
+};
 
 use crate::locale_traits::BaseLocale;
 
-use super::Key;
-use super::args::{AnyArgsId, AnyArgsInner, Args};
-use super::builder::ArgsBuilder;
+use super::{
+    Key,
+    args::{AnyArgsId, AnyArgsInner, Args},
+    builder::ArgsBuilder,
+};
 
 #[doc(hidden)]
 #[cfg(all(feature = "dynamic_load", not(feature = "ssr")))]

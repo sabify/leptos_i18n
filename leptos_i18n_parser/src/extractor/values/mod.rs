@@ -1,25 +1,31 @@
 use std::collections::BTreeMap;
 
-use crate::error::{Diagnostics, Error, Warning};
-use crate::extractor::StringIndexer;
-use crate::extractor::values::attributes::{Attribute, AttributeValue};
-use crate::extractor::values::foreign_key::{ResolvedLocale, ResolvedValue};
-use crate::parser::dummy::Dummy;
-use crate::parser::options::Config;
-use crate::parser::raw_value::RawLiteral;
-use crate::parser::raw_value::component::{
-    Component, RawAttribute, RawAttributeValue, RawAttributes,
+use crate::{
+    error::{Diagnostics, Error, Warning},
+    extractor::{
+        StringIndexer,
+        values::{
+            attributes::{Attribute, AttributeValue},
+            foreign_key::{ResolvedLocale, ResolvedValue},
+        },
+    },
+    parser::{
+        dummy::Dummy,
+        options::Config,
+        raw_value::{
+            RawLiteral,
+            component::{Component, RawAttribute, RawAttributeValue, RawAttributes},
+            variable::Variable,
+        },
+    },
+    utils::{Key, Location},
 };
-use crate::parser::raw_value::variable::Variable;
-use crate::utils::Key;
-use crate::utils::Location;
 
 pub mod attributes;
 pub mod foreign_key;
 pub mod plurals;
 
-use super::BuilderId;
-use super::defaults::DefaultedLocales;
+use super::{BuilderId, defaults::DefaultedLocales};
 
 use attributes::Attributes;
 use plurals::Plurals;
