@@ -58,7 +58,7 @@ macro_rules! build_key_display {
 macro_rules! key {
     (scope = $scope:ty, $($keys:ident).+ $(, $($args:tt)*)?) => {
         $crate::build_key!(
-            $crate::key_builder(
+            $crate::key_builder!(
                 scope = $scope,
                 $($keys).+
             )
@@ -67,7 +67,7 @@ macro_rules! key {
     };
     ($scope:expr, $($keys:ident).+ $(, $($args:tt)*)?) => {
         $crate::build_key!(
-            $crate::key_builder(
+            $crate::key_builder!(
                 $scope,
                 $($keys).+
             )
@@ -80,7 +80,7 @@ macro_rules! key {
 macro_rules! display_key {
     (scope = $scope:ty, $($keys:ident).+ $(, $($args:tt)*)?) => {
         $crate::build_key_display!(
-            $crate::key_builder(
+            $crate::key_builder!(
                 scope = $scope,
                 $($keys).+
             )
@@ -89,7 +89,7 @@ macro_rules! display_key {
     };
     ($scope:expr, $($keys:ident).+ $(, $($args:tt)*)?) => {
         $crate::build_key_display!(
-            $crate::key_builder(
+            $crate::key_builder!(
                 $scope,
                 $($keys).+
             )
@@ -716,6 +716,10 @@ macro_rules! scope_locale {
 
 /// Create a marker type that can be used to scope a locale or a context.
 ///
+/// The first argument is a scope type such as the generated `Locale`, followed by
+/// the namespace/subkey path. An optional third argument specifies the path to
+/// the `leptos_i18n` crate, for example when using a reexport.
+///
 /// ```rust, no_run
 /// #   leptos_i18n::declare_locales! {
 /// #       path: leptos_i18n,
@@ -732,7 +736,7 @@ macro_rules! scope_locale {
 /// use i18n::*;
 ///
 /// // With a locale:
-/// type NamespaceScope = define_scope!(i18n, namespace); // first arg is the path to the i18n module
+/// type NamespaceScope = define_scope!(Locale, namespace); // first arg is the scope type
 ///
 /// let locale = Locale::en;
 /// let namespace_locale = locale.scope::<NamespaceScope>();
@@ -741,7 +745,7 @@ macro_rules! scope_locale {
 /// td!(namespace_locale, subkeys.value);
 ///
 /// // With a context:
-/// type SubkeysScope = define_scope!(i18n, namespace.subkeys);
+/// type SubkeysScope = define_scope!(Locale, namespace.subkeys);
 ///
 /// let i18n = use_i18n_scoped!(scope = SubkeysScope);
 ///
@@ -749,6 +753,9 @@ macro_rules! scope_locale {
 /// ```
 #[macro_export]
 macro_rules! define_scope {
+    ($scope:ty, $($keys:ident).+) => {
+        $crate::define_scope!($scope, $($keys).+, $crate)
+    };
     ($scope:ty, $key:ident $(, $($path:tt)*)?) => {
         <
             <$scope as $crate::scopes::Scope>::Keys as $crate::scopes::markers::SubkeyKeyAccessor<
