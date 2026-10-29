@@ -33,6 +33,9 @@ jobs:
         working-directory: leptos_i18n
         run: cargo all-features test
 
+      - name: Test workspace support crates
+        run: cargo test -p leptos_i18n_parser -p leptos_i18n_codegen -p leptos_i18n_macro -p leptos_i18n_build --features leptos_i18n_parser/plurals
+
       - name: Check format
         run: cargo fmt --check
 
