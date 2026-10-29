@@ -58,4 +58,29 @@ leptos_i18n = "0.6"
 
 ## How to use
 
+Generate the `i18n` module in `build.rs` with `leptos_i18n_build` as a build dependency:
+
+```rust
+use leptos_i18n_build::{Config, TranslationsInfos};
+use std::{error::Error, path::PathBuf};
+
+fn main() -> Result<(), Box<dyn Error>> {
+    println!("cargo::rerun-if-changed=build.rs");
+    println!("cargo::rerun-if-changed=Cargo.toml");
+    let cfg = Config::new("en")?.add_locale("fr")?;
+    let translations = TranslationsInfos::parse(cfg)?;
+    translations.emit_diagnostics();
+    translations.rerun_if_locales_changed();
+    let directory = PathBuf::from(std::env::var_os("OUT_DIR").unwrap()).join("i18n");
+    translations.generate_i18n_module(directory)?;
+    Ok(())
+}
+```
+
+Place translations in `locales/en.json` and `locales/fr.json`, then include the generated module in your application:
+
+```rust
+include!(concat!(env!("OUT_DIR"), "/i18n/mod.rs"));
+```
+
 You can look into the [Book](https://baptistemontan.github.io/leptos_i18n) for documentation, or look for [examples](https://github.com/Baptistemontan/leptos_i18n/tree/master/examples) on the github repo.

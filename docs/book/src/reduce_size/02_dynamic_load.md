@@ -21,40 +21,39 @@ When the client needs access to an unloaded unit, it will request it from the se
 
 ### Async Accessors
 
-For obvious reasons, with the `"dynamic_load"` accessing a value is now async, `t!`, `td!` and `tu!` still return `impl Fn() -> impl IntoView`, as the async part is handled inside of it with some optimizations, but the `*_display!` and `*_string!` variants now return a future and need to be awaited.
+With `dynamic_load`, accessing translations can require asynchronous loading. The view macros `t!`, `td!`, and `tu!` handle this internally and produce Leptos views.
 
-You can turn them into some kind of `Signal<Option<String>>` using leptos `AsyncDerived`:
+The `*_display!` and `*_string!` variants return futures that must be awaited. Awaiting a string macro produces a `String`; awaiting a display macro produces a value implementing `Display`.
+
+You can expose a loaded string through Leptos `AsyncDerived`:
 
 ```rust,ignore
 let i18n = use_i18n();
-let translation = AsyncDerived::new(move || t_string!(i18n, key)); // .get() will return an `Option<&'static str>`
+let translation = AsyncDerived::new(move || t_string!(i18n, key)); // .get() returns Option<String>
 ```
 
-Feel free to make yourself a macro to wrap them:
+You can also wrap this pattern in a macro:
 
 ```rust,ignore
 macro_rules! t_string_async {
-    ($($tt:tt),*) => {
-        leptos::prelude::AsyncDerived::new(move || leptos_i18n::t_string!($($tt),*))
-    }
+    ($($args:tt)*) => {
+        leptos::prelude::AsyncDerived::new(move || leptos_i18n::t_string!($($args)*))
+    };
 }
 ```
 
-This could have been the design by default, but there are multiple ways to handle it so I decided to leave the choice to the user.
-
-_note_: They are technically not needed to be async on the server, as translations are still baked in for them,
-but for the API to be the same on the client and the server they return the value wrapped in an async block.
+These macros return futures on the server too, even though server translations are baked in. This keeps the same async API on the client and server.
 
 ### Server Fn
 
 If you use a backend that needs to manually register server functions,
-you can use the `ServerFn` associated type on the `Locale` trait implemented by the generated `Locale` enum:
+you can use the `ServerFn` associated type on the `BaseLocale` trait implemented by the generated `Locale` enum:
 
 ```rust,ignore
 use i18n::Locale;
-use leptos_i18n::Locale as LocaleTrait;
+use leptos_i18n::locale_traits::BaseLocale;
 
-register_server_fn::<<Locale as LocaleTrait>::ServerFn>();
+register_server_fn::<<Locale as BaseLocale>::ServerFn>();
 ```
 
 ### CSR
@@ -69,20 +68,27 @@ leptos_i18n_build = "0.6.0"
 ```
 
 ```rust
-use leptos_i18n_build::TranslationsInfos;
+use leptos_i18n_build::{Config, TranslationsInfos, options::CodegenOptions};
+use std::{error::Error, path::PathBuf};
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     println!("cargo::rerun-if-changed=build.rs");
     println!("cargo::rerun-if-changed=Cargo.toml");
 
-    let translations_infos = TranslationsInfos::parse(Default::default()).unwrap();
+    let cfg = Config::new("en")?.add_locale("fr")?;
+    let options = CodegenOptions::default().translations_uri("i18n/{locale}.json");
+    let i18n_mod_directory = PathBuf::from(std::env::var_os("OUT_DIR").unwrap()).join("i18n");
+    let translations_infos = TranslationsInfos::parse(cfg)?;
 
+    translations_infos.emit_diagnostics();
     translations_infos.rerun_if_locales_changed();
+    translations_infos.generate_i18n_module_with_options(i18n_mod_directory, options)?;
 
     translations_infos
         .get_translations()
-        .write_to_dir("path/to/dir")
-        .unwrap();
+        .write_to_dir("path/to/dir")?;
+
+    Ok(())
 }
 ```
 
@@ -122,10 +128,12 @@ Then if you are using Trunk you just have to add the directory to the build pipe
 ```
 
 Now the translations will be available at `i18n/{locale}.json`.
-To inform `leptos_i18n` where to find those translations, you need to supply the `translations_uri` to the config builder:
+To inform `leptos_i18n` where to find those translations, set `CodegenOptions::translations_uri` before generating the module, as in the build script above:
 
 ```rust
-let cfg = cfg.translations_uri("i18n/{locale}.json"); // or "i18n/{namespace}/{locale}.json" when using namespaces
+let options = CodegenOptions::default().translations_uri("i18n/{locale}.json");
+// With namespaces, use "i18n/{namespace}/{locale}.json" instead.
+translations_infos.generate_i18n_module_with_options(i18n_mod_directory, options)?;
 ```
 
 And this is it!

@@ -1,9 +1,8 @@
 # The `td_string!` Macro
 
-The `td_string!` macro is used for interpolations outside the context of rendering views. It lets you provide different kinds of values and returns either a `&'static str` or a `String` depending on the value of the key.
-If the value is a plain string or boolean, it returns a `&'static str`. If it's an interpolation or a number, it returns a `String`.
+The `td_string!` macro renders a translation as a `String` outside the context of rendering views, including plain strings, booleans, numbers, and interpolations.
 
-This requires the `interpolate_display` feature to be enabled to work with interpolations.
+Interpolations work without any additional option. With `dynamic_load`, string and display macros return futures on both the client and server; add `.await` to the calls in these examples. See [dynamic loading](../reduce_size/02_dynamic_load.md).
 
 It enables you to do this:
 
@@ -12,20 +11,20 @@ It enables you to do this:
 assert_eq!(
     td_string!(Locale::en, click_count, count = 10),
     "You clicked 10 times"
-)
+);
 assert_eq!(
     td_string!(Locale::en, click_count, count = "a lot of"),
     "You clicked a lot of times"
-)
+);
 ```
 
 ### Expected Values
 
 Variables expect anything that implements `Display`.
 
-If the key uses plurals, it expects the type of the count. If you set the type to `f32`, it expects a `f32`.
+If the key uses plurals, it expects a numeric count.
 
-Components expect a value that implements `leptos_i18::display::DisplayComponent<M>`. You can find some types made to help with formatting in the `display` module,
+Components expect a value that implements `leptos_i18n::display::DisplayComponent<M>`. You can find some types made to help with formatting in the `display` module,
 such as `DisplayComp`. (`M` is a marker for `Fn` trait shenanigans, if you implement the trait yourself you can set it to `()`.)
 
 `str`, `String`, and references to them implement this trait such that
@@ -77,7 +76,7 @@ and self-closing components can accept `Fn(&mut Formatter, Attributes)` or `Fn(&
 
 # The `td_display!` Macro
 
-Just like the `td_string!` macro but returns either a struct implementing `Display` or a `&'static str` instead of a `Cow<'static, str>`.
+Just like the `td_string!` macro but returns a `DisplayKey` implementing `Display` instead of allocating a `String`.
 
 This is useful if you will print the value or use it in any formatting operation, as it will avoid a temporary `String`.
 
@@ -86,7 +85,7 @@ use crate::i18n::Locale;
 use leptos_i18n::td_display;
 
 // click_count = "You clicked {{ count }} times"
-let t = td_display!(Locale::en, click_count, count = 10); // this only returns the builder, no work has been done.
+let t = td_display!(Locale::en, click_count, count = 10); // formatting happens when the value is displayed.
 assert_eq!(format!("before {t} after"), "before You clicked 10 times after");
 
 let t_str = t.to_string(); // can call `to_string` as the value implements `Display`

@@ -59,7 +59,7 @@ en (default)
 
 ### 2. Explicit Inheritance (Manual)
 
-When automatic inheritance is not sufficient, you can manually specify inheritance relationships using the `inherits` configuration.
+When automatic inheritance is not sufficient, you can manually specify inheritance relationships using `Config::extend_locale`.
 
 #### Configuration
 

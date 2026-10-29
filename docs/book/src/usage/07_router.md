@@ -72,7 +72,7 @@ You can use the `i18n_path!` macro inside the `I18nRoute` to create localized pa
 use leptos_i18n_router::i18n_path;
 
 <I18nRoute<Locale, _, _> view=Outlet>
-    <Route path=i18n_path!(Locale, |locale| td_string(locale, segment_path_name)) view={/* */} />
+    <Route path=i18n_path!(Locale, segment_path_name) view={/* */} />
 </I18nRoute<Locale, _, _>>
 ```
 
@@ -81,6 +81,8 @@ If you have `segment_path_name = "search"` for English, and `segment_path_name =
 - "/search" (if default = "en")
 - "/en/search"
 - "/fr/rechercher"
+
+The first argument is a scope type, and the second is a translation key path such as `routes.search`. The key must be a string without interpolation arguments, and every locale must provide a string value.
 
 It can be used at any depth, and if not used inside an `i18nRoute` it will default to the default locale.
 

@@ -1,10 +1,15 @@
+//! Argument types associated with translation keys.
+
 use std::marker::PhantomData;
 
 use super::KeyId;
 use crate::locale_traits::BaseLocale;
 
+/// Associates interpolation arguments with their locale and key identifier.
 pub trait Args: Sized {
+    /// The base locale supported by these arguments.
     type Locale: BaseLocale;
+    /// The identifier of the translation key.
     type Id: KeyId;
 }
 
@@ -22,6 +27,7 @@ pub(crate) struct AnyArgsInner<A: Args, Data = ()> {
     pub data_marker: PhantomData<Data>,
 }
 
+/// A translation key path used after erasing its generated identifier type.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AnyArgsId(pub &'static str);
 

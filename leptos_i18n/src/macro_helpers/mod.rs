@@ -25,6 +25,7 @@ fn write_locale_array<L: Locale>(f: &mut core::fmt::Formatter) -> core::fmt::Res
     write!(f, "]")
 }
 
+/// An error returned when a string does not match a supported locale.
 #[derive(Debug, Clone)]
 pub struct LocaleFromStrError<L> {
     got: String,
@@ -39,6 +40,7 @@ impl<L: Locale> Display for LocaleFromStrError<L> {
 }
 
 impl<L> LocaleFromStrError<L> {
+    /// Create an error containing the unrecognized locale string.
     pub fn new(got: String) -> Self {
         LocaleFromStrError {
             got,

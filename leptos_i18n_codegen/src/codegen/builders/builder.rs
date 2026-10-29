@@ -122,7 +122,7 @@ fn gen_comp_methods(
     let var_name = key
         .name
         .strip_prefix("comp_")
-        .expect("components keys must start with var_");
+        .expect("components keys must start with comp_");
 
     let repeated_message = format!("Repeated component {var_name}");
     let missing_message = format!("Missing component {var_name}");

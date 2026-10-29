@@ -1,3 +1,5 @@
+//! Translation arguments used to render Leptos views.
+
 use std::marker::PhantomData;
 
 use leptos::IntoView;
@@ -16,25 +18,35 @@ pub trait IntoViewFuture: Future<Output: IntoView + Clone + 'static> + 'static {
 #[cfg(all(feature = "dynamic_load", not(feature = "ssr")))]
 impl<F> IntoViewFuture for F where F: Future<Output: IntoView + Clone + 'static> + 'static {}
 
+/// Converts a completed generated builder into view arguments.
 pub trait IntoViewArgsMarker<B>: ArgsBuilder {
+    /// The view arguments produced by the builder.
     type Args: IntoViewArgs<Locale = Self::Locale, Id = Self::Id>;
+    /// Convert the completed builder into view arguments.
     fn into_args(builder: B) -> Self::Args;
 }
 
+/// Renders a translation with its interpolation arguments as a Leptos view.
 pub trait IntoViewArgs: Args {
+    /// Load and render the translation for a key and locale.
     #[cfg(all(feature = "dynamic_load", not(feature = "ssr")))]
     fn render(self, id: Self::Id, locale: Self::Locale) -> impl IntoViewFuture;
 
+    /// Render the translation for a key and locale.
     #[cfg(not(all(feature = "dynamic_load", not(feature = "ssr"))))]
     fn render(self, id: Self::Id, locale: Self::Locale) -> impl IntoView + Clone + 'static;
 }
 
+/// Converts view arguments to a representation shared by compatible keys.
 pub trait DowngradableArgs: IntoViewArgs {
+    /// The shared view argument representation.
     type Downgraded: IntoViewArgs<Locale = Self::Locale>;
 
+    /// Convert a key while preserving its view rendering.
     fn downgrade(this: Key<Self>) -> Key<Self::Downgraded>;
 }
 
+/// View arguments with erased concrete types for a base locale.
 pub struct AnyIntoViewArgs<L: BaseLocale> {
     args: Box<dyn DynAnyIntoViewArgs<Locale = L>>,
 }
@@ -80,6 +92,7 @@ impl<L: BaseLocale> DowngradableArgs for AnyIntoViewArgs<L> {
     }
 }
 impl<L: BaseLocale> AnyIntoViewArgs<L> {
+    /// Erase the concrete argument and identifier types for view rendering.
     pub fn from_args<A>(args: A, id: A::Id) -> Self
     where
         A: IntoViewArgs<Locale = L> + Clone + Send + Sync + 'static,

@@ -1,3 +1,5 @@
+//! Builders for translation keys and their interpolation arguments.
+
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::marker::PhantomData;
@@ -9,16 +11,22 @@ use super::display::{DisplayArgsBuilder, DisplayArgsMarker};
 use super::view::IntoViewArgsMarker;
 use crate::locale_traits::BaseLocale;
 
+/// A translation key identifier ready to receive interpolation arguments.
 pub struct KeyBuilder<B: ArgsBuilder> {
     id: B::Id,
     _marker: PhantomData<B>,
 }
 
+/// Associates a translation key with its generated argument builder.
 pub trait ArgsBuilder: Copy + 'static {
+    /// The identifier of the translation key.
     type Id: KeyId;
+    /// The generated builder for view interpolation arguments.
     type Builder: 'static;
+    /// The base locale supported by the builder.
     type Locale: BaseLocale;
 
+    /// Create a builder with no interpolation arguments supplied.
     fn new() -> Self::Builder;
 }
 
@@ -26,8 +34,11 @@ pub trait ArgsBuilder: Copy + 'static {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FailedBuilder {}
 
+/// Converts a key builder to a representation shared by compatible keys.
 pub trait DowngradableArgBuilder: ArgsBuilder {
+    /// The shared builder representation.
     type Downgraded: ArgsBuilder<Locale = Self::Locale, Builder = Self::Builder>;
+    /// The key identifier in the shared representation.
     const ID: <Self::Downgraded as ArgsBuilder>::Id;
 }
 
@@ -81,6 +92,7 @@ impl<B: ArgsBuilder> KeyBuilder<B> {
 }
 
 impl<B: DowngradableArgBuilder> KeyBuilder<B> {
+    /// Convert to the builder representation shared by compatible keys.
     pub const fn downgrade(self) -> KeyBuilder<B::Downgraded> {
         KeyBuilder {
             id: B::ID,

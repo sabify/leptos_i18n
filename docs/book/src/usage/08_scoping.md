@@ -98,10 +98,10 @@ fn foo(locale: Locale) {
 
 ## The `define_scope!` Macro
 
-Allow to define a marker type that represent a scope, it takes a path to the `i18n` module and the key path:
+Define a scope type alias by passing an existing scope type and a key path. Use the generated `Locale` type for the root scope:
 
 ```rust, ignore
-type SubkeysScope = define_scope!(crate::i18n, namespace.subkeys);
+type SubkeysScope = define_scope!(Locale, namespace.subkeys);
 
 fn foo(locale: Locale) {
     let locale = locale.scope::<SubkeysScope>();
@@ -113,57 +113,43 @@ fn foo(locale: Locale) {
 }
 
 fn bar() -> impl IntoView {
-    let i18n = use_i18n_scoped::<SubkeysScope>();
+    let i18n = use_i18n_scoped!(scope = SubkeysScope);
     // equivalent to `use_i18n().scope::<SubkeysScope>()`
 
     t!(i18n, value)
 }
 ```
 
-Unfortunately, can't be extended (yet ?).
-
-This is usefull when you have namespaces/subkeys for large parts of your frontend, you have types to reuse:
-
-```rust, ignore
-type SubkeysScope = define_scope!(crate::i18n, namespace.subkeys);
-
-type SubkeysCtx = I18nContext<Locale, SubkeysScope>;
-
-let i18n: SubkeysCtx = use_i18n_scoped();
-```
-
-Also allow const scoping of `Locale`, still quite cumbersome though:
-
-```rust, ignore
-use leptos_i18n::ConstLocale;
-
-const FR_SUBKEYS: ConstLocale<Locale, SubkeysScope> = ConstLocale::new(Locale::fr);
-```
-
-## How it works (for nerds only)
-
-Unfortunately, it looks too good to be true... What's the catch? Where is the tradeoff?
-
-To make this possible, it uses a typestate pattern, but some of the types are hard to access as a user as they are defined deep in the generated `i18n` module.
-This makes it difficult to write the type of a scoped context or a scoped locale.
-
-By default, `I18nContext<L, S>` is only generic over `L` because the `S` scope is the "default" one provided by `L`, so you can easily write `I18nContext<Locale>`.
-But once you scope it, the `S` parameters will look like `i18n::namespaces::ns_namespace::subkeys::sk_subkeys::subkeys_subkeys`.
-
-Yes. This is the path to the struct holding the keys of `namespace.subkeys`.
-
-This makes it difficult to pass a scoped type around, as it would require writing `I18nContext<Locale, i18n::namespaces::ns_namespace::subkeys::sk_subkeys::subkeys_subkeys>`.
-
-That's the type the `define_scope!` macro returns, it recreate the path and retrieve the underlying type.
-
-If you look at the generated code for `use_i18n_scoped!` you will see something like this:
+Scopes can be extended by passing a previously defined scope type:
 
 ```rust,ignore
-let i18n = { leptos_i18n::__private::scope_ctx_util(use_i18n(), |_k| &_k.$keys) };
+type MoreSubkeysScope = define_scope!(SubkeysScope, more_subkeys);
 ```
 
-Hmm, what is this closure for? It’s just here for type inference and key checking! The function parameter is even `_:fn(&OS) -> &NS`, it's never used.
-The function is even const (not for `scope_locale!` though).
+An optional third argument specifies the path to the `leptos_i18n` crate when needed, for example `define_scope!(Locale, namespace.subkeys, leptos_i18n)`.
 
-But being a typestate, using it or not actually results in the same code path.
-And with how aggressive Rust is with inlining small functions, it probably compiles to the exact same thing.
+This is useful when you have namespaces/subkeys for large parts of your frontend and need types to reuse. `I18nContext` takes one generic parameter, the scope:
+
+```rust, ignore
+type SubkeysScope = define_scope!(Locale, namespace.subkeys);
+
+type SubkeysCtx = I18nContext<SubkeysScope>;
+
+let i18n: SubkeysCtx = use_i18n_scoped!(scope = SubkeysScope);
+```
+
+For a locale in a const context, use `ScopedLocale::new`:
+
+```rust, ignore
+use leptos_i18n::ScopedLocale;
+
+const FR_SUBKEYS: ScopedLocale<SubkeysScope> = ScopedLocale::new(Locale::fr);
+```
+
+## How It Works
+
+Each generated keys struct implements `Scope`, which associates it with its base locale and available keys. `define_scope!` selects the nested keys type and checks that the path exists.
+
+`I18nContext<Locale>` uses the root scope. `I18nContext<SubkeysScope>` uses the same locale signal but limits key access to that scope. Translation macros navigate the generated keys structs; the generated `i18n::keys` module contains the corresponding key modules.
+
+Scoping changes which keys are available without creating a separate locale signal. A `ScopedLocale<SubkeysScope>` similarly pairs the base locale with the scope type.

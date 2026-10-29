@@ -7,6 +7,10 @@ macro_rules! declare_locales {
     };
 }
 
+/// Select a generated key builder from a scope type or a locale/context value.
+///
+/// Use `key_builder!(scope = Locale, path.to.key)` for a type, or
+/// `key_builder!(locale_or_context, path.to.key)` for a value.
 #[macro_export]
 macro_rules! key_builder {
     (scope = $scope: ty, $($keys:ident).+) => {
@@ -28,6 +32,9 @@ macro_rules! key_builder {
     };
 }
 
+/// Build a view key from a key builder and its interpolation arguments.
+///
+/// Arguments use the same syntax as `t!`; omit them for keys without interpolations.
 #[macro_export]
 macro_rules! build_key {
     ($builder: expr) => {
@@ -41,6 +48,9 @@ macro_rules! build_key {
     }
 }
 
+/// Build a display key from a key builder and its interpolation arguments.
+///
+/// Arguments use the same syntax as `td_display!`.
 #[macro_export]
 macro_rules! build_key_display {
     ($builder: expr) => {
@@ -54,6 +64,11 @@ macro_rules! build_key_display {
     }
 }
 
+/// Create a reusable translation key with view interpolation arguments.
+///
+/// Use `key!(scope = Locale, path.to.key, arg = value)` or pass a locale/context
+/// value as the first argument. Render the result with `t!(context, key = key)`
+/// or `td!(locale, key = key)`.
 #[macro_export]
 macro_rules! key {
     (scope = $scope:ty, $($keys:ident).+ $(, $($args:tt)*)?) => {
@@ -76,6 +91,11 @@ macro_rules! key {
     };
 }
 
+/// Create a reusable translation key with display interpolation arguments.
+///
+/// Use `display_key!(scope = Locale, path.to.key, arg = value)` or pass a
+/// locale/context value as the first argument. Format the result with
+/// `td_display!(locale, key = key)` or `t_display!(context, key = key)`.
 #[macro_export]
 macro_rules! display_key {
     (scope = $scope:ty, $($keys:ident).+ $(, $($args:tt)*)?) => {
@@ -308,7 +328,11 @@ macro_rules! tu {
     };
 }
 
-/// Just like the `t!` macro but return a `&'static str` or a `String` instead of a view.
+/// Render a translation as a `String`, tracking changes to the context locale.
+///
+/// Interpolations work without additional codegen options.
+/// With `dynamic_load`, await the returned future to obtain the string on both
+/// the client and server.
 ///
 /// Usage:
 ///
@@ -316,7 +340,6 @@ macro_rules! tu {
 #[cfg_attr(not(feature = "dynamic_load"), doc = "```rust, no_run")]
 /// #   leptos_i18n::declare_locales! {
 /// #       path: leptos_i18n,
-/// #       interpolate_display,
 /// #       default: "en",
 /// #       locales: ["en"],
 /// #       en: {
@@ -339,8 +362,7 @@ macro_rules! tu {
 /// );
 /// ```
 ///
-/// If you want to avoid a temporary `String` to format in a buffer, you can use `t_display!` which return the raw builder which implement `Display`.
-/// In fact, `t_string!(args)` internally is `t_display!(args).to_string()` (when using interpolation, else it just returns a `&'static str`).
+/// Use `t_display!` to format a translation without allocating a temporary `String`.
 #[macro_export]
 macro_rules! t_string {
     ($($tt:tt)*) => {
@@ -356,7 +378,6 @@ macro_rules! t_string {
 #[cfg_attr(not(feature = "dynamic_load"), doc = "```rust")]
 /// #   leptos_i18n::declare_locales! {
 /// #       path: leptos_i18n,
-/// #       interpolate_display,
 /// #       default: "en",
 /// #       locales: ["en"],
 /// #       en: {
@@ -391,9 +412,11 @@ macro_rules! tu_string {
     };
 }
 
-/// Just like the `t_string!` macro but return either a struct implementing `Display` or a `&'static str` instead.
+/// Return a `DisplayKey` implementing `Display`, tracking changes to the context locale.
 ///
 /// This is useful if you will print the value or use it in any formatting operation, as it will avoid a temporary `String`.
+/// With `dynamic_load`, await the returned future to obtain the display value on
+/// both the client and server.
 ///
 /// Usage:
 ///
@@ -401,7 +424,6 @@ macro_rules! tu_string {
 #[cfg_attr(not(feature = "dynamic_load"), doc = "```rust, no_run")]
 /// #   leptos_i18n::declare_locales! {
 /// #       path: leptos_i18n,
-/// #       interpolate_display,
 /// #       default: "en",
 /// #       locales: ["en"],
 /// #       en: {
@@ -412,7 +434,7 @@ macro_rules! tu_string {
 /// let i18n = use_i18n(); // locale = "en"
 ///
 /// // click_count = "You clicked {{ count }} times"
-/// let t = t_display!(i18n, click_count, count = 10); // this only return the builder, no work has been done.
+/// let t = t_display!(i18n, click_count, count = 10); // formatting happens when displayed.
 ///
 /// assert_eq!(format!("before {t} after"), "before You clicked 10 times after");
 ///
@@ -421,7 +443,7 @@ macro_rules! tu_string {
 /// assert_eq!(t_str, "You clicked 10 times");
 /// ```
 ///
-/// Note that this is only usefull with interpolations, as with plain strings `t_display!` and `t_string!` both just returns the inner `&'static str`.
+/// Plain strings and interpolated translations both use the same display interface.
 #[macro_export]
 macro_rules! t_display {
     ($ctx:expr, key = $key:expr) => {
@@ -447,7 +469,6 @@ macro_rules! t_display {
 #[cfg_attr(not(feature = "dynamic_load"), doc = "```rust")]
 /// #   leptos_i18n::declare_locales! {
 /// #       path: leptos_i18n,
-/// #       interpolate_display,
 /// #       default: "en",
 /// #       locales: ["en"],
 /// #       en: {
@@ -457,7 +478,7 @@ macro_rules! t_display {
 /// # use i18n::*;
 /// // click_count = "You clicked {{ count }} times"
 ///
-/// let t = td_display!(Locale::en, click_count, count = 10); // this only return the builder, no work has been done.
+/// let t = td_display!(Locale::en, click_count, count = 10); // formatting happens when displayed.
 ///
 /// assert_eq!(format!("before {t} after"), "before You clicked 10 times after");
 ///

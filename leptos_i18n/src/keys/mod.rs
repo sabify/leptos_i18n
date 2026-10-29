@@ -1,4 +1,4 @@
-//! Module for keys
+//! Translation keys, argument builders, and rendering traits.
 
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -13,15 +13,19 @@ use args::{AnyArgsId, Args};
 use display::{AnyDisplayArgs, DisplayArgs, DisplayKey, DowngradableDisplayArgs};
 use view::{AnyIntoViewArgs, DowngradableArgs, IntoViewArgs};
 
+/// A translation key identifier paired with its interpolation arguments.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Key<A: Args> {
     id: A::Id,
     args: A,
 }
 
+/// A view translation key with erased argument types for locale `L`.
 pub type AnyKey<L> = Key<AnyIntoViewArgs<L>>;
 
+/// Identifies a translation key independently of its interpolation arguments.
 pub trait KeyId: Send + Sync + Copy + Hash + Ord + 'static {
+    /// Return the translation key path.
     fn key(self) -> &'static str;
 }
 
@@ -74,6 +78,7 @@ impl<A: Args> Key<A> {
         }
     }
 
+    /// Convert to a shared argument representation while preserving view rendering.
     pub fn downgrade(self) -> Key<A::Downgraded>
     where
         A: DowngradableArgs,
@@ -81,6 +86,7 @@ impl<A: Args> Key<A> {
         A::downgrade(self)
     }
 
+    /// Convert to a shared argument representation while preserving display formatting.
     pub fn downgrade_display(self) -> Key<A::Downgraded>
     where
         A: DowngradableDisplayArgs,
@@ -88,6 +94,7 @@ impl<A: Args> Key<A> {
         A::downgrade(self)
     }
 
+    /// Erase the argument types so different view keys can share one type.
     pub fn downgrade_any(self) -> Key<AnyIntoViewArgs<A::Locale>>
     where
         A: IntoViewArgs + Clone + Send + Sync + 'static,
@@ -100,6 +107,7 @@ impl<A: Args> Key<A> {
         }
     }
 
+    /// Erase the argument types so display keys with the same data type can share one type.
     pub fn downgrade_any_display<'a>(self) -> Key<AnyDisplayArgs<'a, A::Locale, A::Data>>
     where
         A: DisplayArgs + Clone + Send + Sync + 'a,
